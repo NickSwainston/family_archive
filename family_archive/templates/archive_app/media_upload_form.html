@@ -1,0 +1,14 @@
+{% extends 'archive_app/navbar.html' %}
+
+{% block content %}
+
+<form class="form" method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{form.media_path.label_tag}}
+    {{form.media_path}}
+        <br><br>
+
+    <input type="submit" name="" id="">
+</form>
+
+{% endblock %}
