@@ -14,8 +14,19 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+
+from archive_app import views
 
 urlpatterns = [
+    path('', views.home_page, name='home_page'),
     path('admin/', admin.site.urls),
+    path('accounts/', include('django.contrib.auth.urls')),
+    path('media_upload/', views.media_upload),
+    path('family_tree/', views.family_tree),
 ]
+
+# allow media files to be linked and viewed directly
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
