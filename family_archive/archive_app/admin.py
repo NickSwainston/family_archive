@@ -1,11 +1,10 @@
 from django.contrib import admin
 
 from . import models
-from django.db import models as django_models
 
 
 class FamilyMemberAdmin(admin.ModelAdmin):
-    list_display = ('id', 'full_name', 'partner', 'partner2')
+    list_display = ('id', 'full_name', 'father', 'mother', 'gender', 'partner', 'birth_date', 'death_date')
     search_fields = ('full_name',)
     autocomplete_fields = ('partner', 'partner2', 'mother', 'father')
 
