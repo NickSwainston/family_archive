@@ -2,7 +2,7 @@ from django.http import HttpResponse
 from django.shortcuts import redirect, render
 
 from .forms import MediaFileForm
-from .models import MediaFile
+from .models import MediaFile, FamilyMember
 
 
 def home_page(request):
@@ -30,4 +30,38 @@ def success(request):
 
 
 def family_tree(request):
-    return render(request, 'archive_app/family_tree.html')
+    family_members = FamilyMember.objects.all()
+    family_member_dict_strs = []
+    for fm in family_members:
+        #{ id: 3, pids: [2], gender: 'male',   name: 'Robert Swainston', fid: 1, mid: 0},
+        print(fm.get_gender_display())
+        print(fm.full_name)
+        this_str = f"{{ id: {fm.id}, gender: '{fm.get_gender_display()}', name: '{fm.full_name}'"
+
+        # partners
+        if fm.partner is not None:
+            if fm.partner2 is None:
+                # only one partner
+                this_str += f", pids: [{fm.partner.id}]"
+            else:
+                this_str += f", pids: [{fm.partner.id}, {fm.partner2.id}]"
+
+        # parents
+        if fm.father is not None:
+            this_str += f", fid: {fm.father.id}"
+        if fm.mother is not None:
+            this_str += f", mid: {fm.mother.id}"
+
+        # birth and death
+        if fm.birth_date is not None:
+            this_str += f", birthDate: {fm.birth_date}"
+        if fm.death_date is not None:
+            this_str += f",deathDate: {fm.death_date}"
+
+        # finish
+        this_str += "},"
+        family_member_dict_strs.append(this_str)
+    context = {
+        'family_members': family_member_dict_strs,
+    }
+    return render(request, 'archive_app/family_tree.html', context)
