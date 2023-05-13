@@ -7,7 +7,6 @@
 <script src="{% static 'FamilyTree.js' %}"></script>
 <div style="width:100%; height:700px;" id="tree"></div>
     <script>
-        //JavaScript
         // FamilyTree.templates.tommy_male.plus =
         //     '<circle cx="0" cy="0" r="15" fill="#ffffff" stroke="#aeaeae" stroke-width="1"></circle>'
         //     + '<line x1="-11" y1="0" x2="11" y2="0" stroke-width="1" stroke="#aeaeae"></line>'
@@ -24,63 +23,132 @@
         //     + '<line x1="-11" y1="0" x2="11" y2="0" stroke-width="1" stroke="#aeaeae"></line>';
 
         // FamilyTree.templates.tommy_female.defs = '<g transform="matrix(0.05,0,0,0.05,-12,-9)" id="heart"><path fill="#F57C00" d="M438.482,58.61c-24.7-26.549-59.311-41.655-95.573-41.711c-36.291,0.042-70.938,15.14-95.676,41.694l-8.431,8.909  l-8.431-8.909C181.284,5.762,98.663,2.728,45.832,51.815c-2.341,2.176-4.602,4.436-6.778,6.778 c-52.072,56.166-52.072,142.968,0,199.134l187.358,197.581c6.482,6.843,17.284,7.136,24.127,0.654 c0.224-0.212,0.442-0.43,0.654-0.654l187.29-197.581C490.551,201.567,490.551,114.77,438.482,58.61z"/><g>';
-        // FamilyTree.templates.tommy_male.defs   = '<g transform="matrix(0.05,0,0,0.05,-12,-9)" id="heart"><path fill="#F57C00" d="M438.482,58.61c-24.7-26.549-59.311-41.655-95.573-41.711c-36.291,0.042-70.938,15.14-95.676,41.694l-8.431,8.909  l-8.431-8.909C181.284,5.762,98.663,2.728,45.832,51.815c-2.341,2.176-4.602,4.436-6.778,6.778 c-52.072,56.166-52.072,142.968,0,199.134l187.358,197.581c6.482,6.843,17.284,7.136,24.127,0.654 c0.224-0.212,0.442-0.43,0.654-0.654l187.29-197.581C490.551,201.567,490.551,114.77,438.482,58.61z"/><g>';
+        // FamilyTree.templates.tommy_male.defs = '<g transform="matrix(0.05,0,0,0.05,-12,-9)" id="heart"><path fill="#F57C00" d="M438.482,58.61c-24.7-26.549-59.311-41.655-95.573-41.711c-36.291,0.042-70.938,15.14-95.676,41.694l-8.431,8.909  l-8.431-8.909C181.284,5.762,98.663,2.728,45.832,51.815c-2.341,2.176-4.602,4.436-6.778,6.778 c-52.072,56.166-52.072,142.968,0,199.134l187.358,197.581c6.482,6.843,17.284,7.136,24.127,0.654 c0.224-0.212,0.442-0.43,0.654-0.654l187.29-197.581C490.551,201.567,490.551,114.77,438.482,58.61z"/><g>';
+        FamilyTree.templates.tommy.field_0 = '<text class="field_0" style="font-size: 20px;" fill="#ffffff" x="125" y="30" text-anchor="middle">{val}</text>';
 
 
         var family = new FamilyTree(document.getElementById("tree"), {
+            // Scroll options
+            showXScroll: FamilyTree.scroll.visible,
+            showYScroll: FamilyTree.scroll.visible,
+            mouseScrool: FamilyTree.action.zoom,
 
+            // Shown fields
             nodeBinding: {
                 field_0: "name",
+                field_1: "birthDate",
+                field_2: "deathDate",
             },
 
+            // Layout separations
+            levelSeparation: 100, // generations
+            siblingSeparation: 10,
+            subtreeSeparation: 50, // cousins
 
-            nodes:
-            [
-                { id: 0, pids: [1], gender: 'female', name: 'Isabella Swainston'},
-                { id: 1, pids: [0], gender: 'male',   name: 'Anthony Swainston'},
-
-                { id: 3, pids: [2], gender: 'male',   name: 'Robert Swainston', fid: 1, mid: 0},
-                { id: 2, pids: [3], gender: 'female', name: 'Veronica Swainston'},
-                { id: 11, gender: 'male',   name: 'Nicholas Swainston', fid: 3, mid: 2},
-                { id: 12, gender: 'male',   name: 'Daniel Swainston', fid: 3, mid: 2},
-                { id: 13, gender: 'female', name: 'Hannah Swainston', fid: 3, mid: 2},
-
-                { id: 5, pids: [6], gender: 'male',   name: 'Roger Swainston', fid: 1, mid: 0},
-                { id: 6, pids: [5], gender: 'female', name: 'Cathy Swainston'},
-                { id: 14, gender: 'male',   name: 'Ben Swainston', fid: 6, mid: 5},
-                { id: 15, gender: 'female', name: 'Zoe Swainston', fid: 6, mid: 5},
-
-                { id: 7, pids: [8], gender: 'male',   name: 'David Swainston', fid: 1, mid: 0},
-                { id: 8, pids: [7], gender: 'female', name: 'Clare Swainston'},
-                { id: 16, gender: 'male',   name: 'Dylan Swainston', fid: 8, mid: 7},
-
-                { id: 9, pids: [10], gender: 'male',   name: 'Jim Swainston', fid: 1, mid: 0},
-                { id: 10, pids: [9], gender: 'female', name: 'Bronwin Swainston'},
-                { id: 17, gender: 'male',   name: 'Flinn Swainston', fid: 10, mid: 9},
-                // { id: 5, pids: [4], gender: 'female', name: 'Yuliya Nikitina', fid: 21, mid: 22, birthDate: '1952-10-02', photo: 'https://cdn.balkan.app/shared/w60/3.jpg', address: "Neybuta, bld. 57, appt. 336", city: "Primorskiy kray", phone: "+7(861)166-92-10", country: "Russia" },
-                // { id: 6, pids: [10, 11, 12, 13], gender: 'male', name: 'Savin Vasiliev', fid: 4, mid: 5, birthDate: '1974-11-21', photo: 'https://cdn.balkan.app/shared/m30/1.jpg', address: "Tankista Belorossova Ul., bld. 2, appt. 51", city: "Ivanovo", phone: "+7(4932)86-83-67", country: "Russia" },
-                // { id: 7, gender: 'female', name: 'Ekaterina Vasilieva', fid: 4, mid: 5, birthDate: '1975-12-15', photo: 'https://cdn.balkan.app/shared/w30/1.jpg', address: "Ul Krasilnikova, bld. 24", city: "Kemerovo", phone: "+7(3842)45-38-84", country: "Russia" },
+            nodes:[
+                {% for member in family_members %}
+                    {{ member|safe }}
+                {% endfor %}
             ]
+            // nodes:[
+            //     { id: 0, pids: [1], gender: 'female', name: 'Isabella Swainston', fid:18, mid:19},
+            //     { id: 1, pids: [0], gender: 'male',   name: 'Anthony Swainston'},
+
+            //     { id: 3, pids: [2], gender: 'male',   name: 'Robert Swainston', fid: 1, mid: 0},
+            //     { id: 2, pids: [3], gender: 'female', name: 'Veronica Swainston'},
+            //     { id: 11, gender: 'male',   name: 'Nicholas Swainston', fid: 3, mid: 2},
+            //     { id: 12, gender: 'male',   name: 'Daniel Swainston', fid: 3, mid: 2},
+            //     { id: 13, gender: 'female', name: 'Hannah Swainston', fid: 3, mid: 2},
+
+            //     { id: 5, pids: [6], gender: 'male',   name: 'Roger Swainston', fid: 1, mid: 0},
+            //     { id: 6, pids: [5], gender: 'female', name: 'Cathy Swainston'},
+            //     { id: 14, gender: 'male',   name: 'Ben Swainston', fid: 6, mid: 5},
+            //     { id: 15, gender: 'female', name: 'Zoe Swainston', fid: 6, mid: 5},
+
+            //     { id: 7, pids: [8], gender: 'male',   name: 'David Swainston', fid: 1, mid: 0},
+            //     { id: 8, pids: [7], gender: 'female', name: 'Clare Swainston'},
+            //     { id: 16, pids: [44], gender: 'male',   name: 'Dylan Swainston', fid: 8, mid: 7},
+            //     { id: 44, pids: [16], gender: 'female',   name: 'Aidan McClean'},
+            //     { id: 60, gender: 'male',   name: 'Rowan Grey McClean', fid: 16, mid: 44},
+
+            //     { id: 9, pids: [10, 61], gender: 'male',   name: 'Jim Swainston', fid: 1, mid: 0},
+            //     { id: 10, pids: [9], gender: 'female', name: 'Bronwyn Calcutt'},
+            //     { id: 17, gender: 'male',   name: 'Flynn Calcutt', fid: 9, mid: 10},
+            //     { id: 61, pids: [9], gender: 'female',   name: 'Jarnica Facchini'},
+            //     { id: 62, gender: 'male',   name: 'Beorn Facchini', fid:9, mid: 61},
+
+            //     { id: 18, pids: [19], gender: 'male',   name: 'Larry Montague', fid:30, mid:31},
+            //     { id: 19, pids: [18], gender: 'female', name: 'Nancy Bell', fid:28, mid:29},
+
+            //     { id: 20, pids: [21], gender: 'male',   name: 'Don Montague', fid:18, mid:19},
+            //     { id: 21, pids: [20], gender: 'female', name: 'Maureen Montague'},
+            //     { id: 32, gender: 'male', name: 'Simon Montague', fid:20, mid:21},
+            //     { id: 33, gender: 'male', name: 'James Montague', fid:20, mid:21},
+            //     { id: 34, gender: 'female', name: 'Kate Montague', fid:20, mid:21},
+
+            //     { id: 22, pids: [23, 58], gender: 'male',   name: 'Paddy Montague', fid:18, mid:19},
+            //     { id: 23, pids: [22], gender: 'female', name: 'Rosie Montague'},
+            //     { id: 58, pids: [22], gender: 'female', name: 'Jeanette'},
+            //     { id: 35, gender: 'male', name: 'Richard Montague', fid:22, mid:58},
+            //     { id: 36, gender: 'male', name: 'Steven Montague', fid:22, mid:58},
+            //     { id: 37, gender: 'female', name: 'Joanne Montague', fid:22, mid:58},
+            //     { id: 38, gender: 'male', name: 'Daniel Montague', fid:22, mid:23},
+            //     { id: 39, gender: 'female', name: 'Hannah Montague', fid:22, mid:23},
+
+            //     { id: 59, pids: [25], gender: 'male',   name: 'Patrick Montague'},
+            //     { id: 25, pids: [24, 59], gender: 'female', name: 'Rosa Montague', fid:18, mid:19},
+            //     { id: 24, pids: [25], gender: 'male',   name: 'Julian Montague'},
+            //     { id: 40, gender: 'female', name: 'Zoe Montague', fid:24, mid:25},
+            //     { id: 41, gender: 'female', name: 'Pippe Montague', fid:24, mid:25},
+            //     { id: 42, gender: 'female', name: 'Jessica Montague', fid:24, mid:25},
+
+            //     { id: 26, pids: [27], gender: 'male',   name: 'Laurie Montague'},
+            //     { id: 27, pids: [26], gender: 'female', name: 'Meg Montague', fid:18, mid:19},
+            //     { id: 43, gender: 'female', name: 'Nellie Montague', fid:26, mid:27},
+
+            //     { id: 28, pids: [29], gender: 'male',   name: 'Kenneth Bell'},
+            //     { id: 29, pids: [28], gender: 'female', name: 'Esther Bell'},
+            //     { id: 45, gender: 'female', name: 'Esther Bell', fid:28, mid:29},
+            //     { id: 46, gender: 'male', name: 'Oliver Bell', fid:28, mid:29},
+            //     { id: 47, gender: 'female', name: 'Dykah Bell', fid:28, mid:29},
+            //     { id: 48, gender: 'male', name: 'Alastine Bell', fid:28, mid:29},
+            //     { id: 49, gender: 'female', name: 'Sally Bell', fid:28, mid:29},
+            //     { id: 50, gender: 'female', name: 'Caroline Bell', fid:28, mid:29},
+            //     { id: 51, gender: 'male', name: 'Edward Bell', fid:28, mid:29},
+
+            //     { id: 30, pids: [31], gender: 'male',   name: 'Charles Montague'},
+            //     { id: 31, pids: [30], gender: 'female', name: 'Madeline Scott'},
+            //     { id: 52, gender: 'female', name: 'Evelyn Montague', fid:30, mid:31},
+            //     { id: 53, gender: 'female', name: 'Rachel Montague', fid:30, mid:31},
+            //     { id: 54, gender: 'female', name: 'Rose Montague', fid:30, mid:31},
+            //     { id: 55, gender: 'male', name: 'Bill Montague', fid:30, mid:31},
+            //     { id: 56, gender: 'female', name: 'Aubrey Montague', fid:30, mid:31},
+            //     { id: 57, gender: 'male', name: 'John Montague', fid:30, mid:31},
+            //     // { id: 5, pids: [4], gender: 'female', name: 'Yuliya Nikitina', fid: 21, mid: 22, birthDate: '1952-10-02', photo: 'https://cdn.balkan.app/shared/w60/3.jpg', address: "Neybuta, bld. 57, appt. 336", city: "Primorskiy kray", phone: "+7(861)166-92-10", country: "Russia" },
+            //     // { id: 6, pids: [10, 11, 12, 13], gender: 'male', name: 'Savin Vasiliev', fid: 4, mid: 5, birthDate: '1974-11-21', photo: 'https://cdn.balkan.app/shared/m30/1.jpg', address: "Tankista Belorossova Ul., bld. 2, appt. 51", city: "Ivanovo", phone: "+7(4932)86-83-67", country: "Russia" },
+            //     // { id: 7, gender: 'female', name: 'Ekaterina Vasilieva', fid: 4, mid: 5, birthDate: '1975-12-15', photo: 'https://cdn.balkan.app/shared/w30/1.jpg', address: "Ul Krasilnikova, bld. 24", city: "Kemerovo", phone: "+7(3842)45-38-84", country: "Russia" },
+
+            // ]
         });
 
 
-        family.on('expcollclick', function (sender, isCollapsing, nodeId) {
-            var node = family.getNode(nodeId);
-            if (isCollapsing){
-                family.expandCollapse(nodeId, [], node.ftChildrenIds)
-            }
-            else{
-                family.expandCollapse(nodeId, node.ftChildrenIds, [])
-            }
-            return false;
-        });
+        // family.on('expcollclick', function (sender, isCollapsing, nodeId) {
+        //     var node = family.getNode(nodeId);
+        //     if (isCollapsing){
+        //         family.expandCollapse(nodeId, [], node.ftChildrenIds)
+        //     }
+        //     else{
+        //         family.expandCollapse(nodeId, node.ftChildrenIds, [])
+        //     }
+        //     return false;
+        // });
 
-        family.on('render-link', function(sender, args){
-            if (args.cnode.ppid != undefined)
-                args.html += '<use data-ctrl-ec-id="' + args.node.id + '" xlink:href="#heart" x="' + (args.p.xb) + '" y="' + (args.p.ya ) +'"/>';
-            if (args.cnode.isPartner && args.node.partnerSeparation == 30)
-                args.html += '<use data-ctrl-ec-id="' + args.node.id + '" xlink:href="#heart" x="' + (args.p.xb) + '" y="' + (args.p.yb) +'"/>';
+        // family.on('render-link', function(sender, args){
+        //     if (args.cnode.ppid != undefined)
+        //         args.html += '<use data-ctrl-ec-id="' + args.node.id + '" xlink:href="#heart" x="' + (args.p.xb) + '" y="' + (args.p.ya ) +'"/>';
+        //     if (args.cnode.isPartner && args.node.partnerSeparation == 30)
+        //         args.html += '<use data-ctrl-ec-id="' + args.node.id + '" xlink:href="#heart" x="' + (args.p.xb) + '" y="' + (args.p.yb) +'"/>';
 
-        });
+        // });
     </script>
 {% endblock %}

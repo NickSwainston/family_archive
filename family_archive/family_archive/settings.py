@@ -120,7 +120,7 @@ TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
-USE_L10N = True
+USE_L10N = False
 
 USE_TZ = True
 
@@ -128,3 +128,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+DATE_FORMAT = "d/m/Y"
+DATE_INPUT_FORMATS = [
+    '%d-%m-%Y',
+    '%d/%m/%Y',
+    '%d-%m-%y',
+    '%d/%m/%y',
+    '%Y-%m-%d',
+    '%Y/%m/%d',
+]
