@@ -22,11 +22,19 @@
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="/frbevent_table">Event Table</a>
+            <a class="nav-link active" aria-current="page" href="/">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="/family_tree">Family Tree</a>
           </li>
 
         </ul>
           {% if user.is_authenticated %}
+            {% if user.is_superuser %}
+              <span class="navbar-text active">
+                <a class="nav-link active" aria-current="page" href="/admin">Admin</a>
+              </span>
+            {% endif %}
             <span class="navbar-text active">
               {{ user.username }}
             </span>
