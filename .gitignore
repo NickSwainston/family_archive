@@ -2,3 +2,4 @@ family_archive/media/*
 family_archive/.env
 **/__pycache__/
 html/
+site/
