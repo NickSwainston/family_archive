@@ -79,8 +79,10 @@ class FamilyMember(models.Model):
     )
     marriage_date2 = models.DateField(verbose_name="Date of Marriage 2", help_text="Date of Marriage with their second partner.", blank=True, null=True)
     marriage_location2 = models.CharField(max_length=256, verbose_name="Location of second marriage", blank=True, null=True)
+
     email = models.EmailField(max_length=254, blank=True, null=True)
     phone_number = models.CharField(max_length=12, blank=True, null=True)
+    profile_picture = models.FileField(upload_to="media/", max_length=1024, blank=True, null=True)
 
     def __str__(self):
         return f"{self.full_name} (id:{self.id})"

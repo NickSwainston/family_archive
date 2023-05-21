@@ -33,7 +33,11 @@ def family_tree(request):
     family_members = FamilyMember.objects.all()
     family_member_dict_strs = []
     for fm in family_members:
-        this_str = f"{{ id: {fm.id}, gender: '{fm.get_gender_display()}', name: '{fm.full_name}', image: '/static/default_profile.jpg'"
+        this_str = f"{{ id: {fm.id}, gender: '{fm.get_gender_display()}', name: '{fm.full_name}'"
+        if len(str(fm.profile_picture)) == 0:
+            this_str += f", image: '/static/default_profile.jpg'"
+        else:
+            this_str += f", image: '{fm.profile_picture.url}'"
 
         # partners
         if fm.partner is not None:
