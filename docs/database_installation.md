@@ -16,25 +16,30 @@ cd family_archive
 poetry install
 ```
 
-## Environment Variables
+## Webapp settings
 
-To run the web application, you will need to set the following environment variables (conda can make these `environment specific <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#setting-environment-variables>`_):
+Use [python-decouple](https://pypi.org/project/python-decouple/) to put the webapp settings and secrets into a file in `family_archive/.env`:
 
-```csv
-#"Variable","Description"
-"DB_USER","Postgres user name which you will set in the next section."
-"DB_PASSWORD","Postgres password which you will set in the next section."
-"DB_SECRET_KEY", "Django secret key. `Here <https://saasitive.com/tutorial/generate-django-secret-key/>`_ is a description of how to generate one."
+```python
+SECRET_KEY=[django-secret](https://miniwebtool.com/django-secret-key-generator/)
+DEBUG=True
+DB_NAME=family_archive
+DB_USER=dbuser
+DB_PASSWORD=dbpassword
+ALLOWED_HOSTS=127.0.0.1
+DB_HOST=localhost
 ```
 
 ## Start the Postgres Database
 
 The following commands will set up the Postgres database for the web app. Replace $DB_USER and $DB_PASSWORD with the environment variable values.
 
-```sql
+```bash
 sudo -u postgres psql
+```
 
-CREATE DATABASE mwa_image_plane_db;
+```sql
+CREATE DATABASE $DB_NAME;
 CREATE USER $DB_USER WITH ENCRYPTED PASSWORD '$DB_PASSWORD';
 
 ALTER ROLE $DB_USER SET client_encoding TO 'utf8';
@@ -49,8 +54,8 @@ ALTER ROLE $DB_USER SET timezone TO 'UTC';
 Run the following commands from the gleam_webapp subdirectory so Django can setup up the database structure and upload defaults
 
 ```bash
-python manage.py makemigrations candidate_app
-python manage.py migrate candidate_app
+python manage.py makemigrations archive_app
+python manage.py migrate archive_app
 python manage.py migrate
 python manage.py migrate --run-syncdb
 ```
@@ -73,8 +78,8 @@ To delete the database use the following commands
 ```sql
 sudo -u postgres psql
 
-DROP DATABASE mwa_image_plane_db;
-CREATE DATABASE mwa_image_plane_db;
+DROP DATABASE $DB_NAME;
+CREATE DATABASE $DB_NAME;
 ```
 
-You will then have to recreate the database using the commands in :ref:`create_database`
+You will then have to recreate the database using the commands in [Setup database for the first time](database_installation.md#Setup database for the first time)

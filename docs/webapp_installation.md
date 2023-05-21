@@ -25,7 +25,7 @@ uwsgi --socket gleam_webapp.sock --module gleam_webapp.wsgi --chmod-socket=666
 
 and nginx should look like this
 
-```
+```nginx
 upstream django {
    server unix:///home/ubuntu/GleamXGPMonitoring/gleam_webapp/gleam_webapp.sock;
 }
@@ -76,7 +76,7 @@ python manage.py collectstatic
 
 and update the nginx to
 
-```
+```nginx
 location /static {
    alias /home/ubuntu/GleamXGPMonitoring/gleam_webapp/static_host;
 }
