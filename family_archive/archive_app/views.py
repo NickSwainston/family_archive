@@ -33,7 +33,7 @@ def family_tree(request):
     family_members = FamilyMember.objects.all()
     family_member_dict_strs = []
     for fm in family_members:
-        this_str = f"{{ id: {fm.id}, gender: '{fm.get_gender_display()}', name: '{fm.full_name}'"
+        this_str = f"{{ id: {fm.id}, gender: '{fm.get_gender_display()}', name: '{fm.full_name}', image: '/static/default_profile.jpg'"
 
         # partners
         if fm.partner is not None:
@@ -42,18 +42,42 @@ def family_tree(request):
                 this_str += f", pids: [{fm.partner.id}]"
             else:
                 this_str += f", pids: [{fm.partner.id}, {fm.partner2.id}]"
+            # Marriage one
+            this_str += f", partner: '{fm.partner.full_name}'"
+            if fm.marriage_date is not None:
+                this_str += f", marriage_date: '{fm.marriage_date}'"
+            if fm.marriage_location is not None:
+                this_str += f', marriage_location: "{fm.marriage_location}"'
+
+            if fm.partner2 is not None:
+                # Marriage two
+                this_str += f", second_partner: '{fm.partner2.full_name}'"
+                if fm.marriage_date2 is not None:
+                    this_str += f", second_marriage_date: '{fm.marriage_date2}'"
+                if fm.marriage_location2 is not None:
+                    this_str += f', second_marriage_location: "{fm.marriage_location2}"'
 
         # parents
         if fm.father is not None:
             this_str += f", fid: {fm.father.id}"
+            this_str += f", father: '{fm.father.full_name}'"
         if fm.mother is not None:
             this_str += f", mid: {fm.mother.id}"
+            this_str += f", mother: '{fm.mother.full_name}'"
 
         # birth and death
         if fm.birth_date is not None:
-            this_str += f", birthDate: {fm.birth_date}"
+            this_str += f", birthDate: '{fm.birth_date}'"
+        if fm.birth_location is not None:
+            this_str += f', birth_location: "{fm.birth_location}"'
         if fm.death_date is not None:
-            this_str += f",deathDate: {fm.death_date}"
+            this_str += f", deathDate: '{fm.death_date}'"
+
+        # Contact info
+        if fm.email is not None:
+            this_str += f", email: '{fm.email}'"
+        if fm.phone_number is not None:
+            this_str += f", phone_number: '{fm.phone_number}'"
 
         # finish
         this_str += "},"
