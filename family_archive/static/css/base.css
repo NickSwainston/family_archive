@@ -24,3 +24,12 @@ body{
 div{
     background-color: #00a6ad;
 }
+
+:root {
+    /* Define colours */
+    --bellagreen: #00a6ad;
+    --maleblue: #232a9c;
+    --femalepurple: #603F8B;
+    --linecolour: #aeaeae;
+    --heartcolour: #b00a62;
+}

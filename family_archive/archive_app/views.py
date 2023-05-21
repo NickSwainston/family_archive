@@ -33,9 +33,6 @@ def family_tree(request):
     family_members = FamilyMember.objects.all()
     family_member_dict_strs = []
     for fm in family_members:
-        #{ id: 3, pids: [2], gender: 'male',   name: 'Robert Swainston', fid: 1, mid: 0},
-        print(fm.get_gender_display())
-        print(fm.full_name)
         this_str = f"{{ id: {fm.id}, gender: '{fm.get_gender_display()}', name: '{fm.full_name}'"
 
         # partners
