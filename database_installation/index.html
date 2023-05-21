@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://example.com/database_installation/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Installation (database) - Family archive</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Installation (database)";
+        var mkdocs_page_input_path = "database_installation.md";
+        var mkdocs_page_url = "/database_installation/";
+      </script>
+    
+    <script src="../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Family archive
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="./">Installation (database)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#dependancies">Dependancies</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#environment-variables">Environment Variables</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#start-the-postgres-database">Start the Postgres Database</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#setup-database-for-the-first-time">Setup database for the first time</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#create-a-superuser">Create a superuser</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#set-up-q3c">Set up Q3C</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#delete-postgres-database">Delete Postgres Database</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../webapp_installation/">Installation (webapp)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../running_server/">Running server</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Family archive</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a> &raquo;</li>
+      <li>Installation (database)</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="database-installation">Database Installation</h1>
+<h2 id="dependancies">Dependancies</h2>
+<p>For Ubuntu or Debian Linux:</p>
+<p>.. code-block::</p>
+<p>sudo apt-get update
+   sudo apt-get install postgresql postgresql-contrib libpq-dev python3-dev graphviz python3-pip gosu postgresql-q3c locales</p>
+<p>Then install the python requirements (recommended in its own virtual environment) using:</p>
+<p>.. code-block::</p>
+<p>cd family_archive
+   poetry install</p>
+<p>You will also need to install django-q3c which is currently private so you will need to ask to get access from the <code>Data Central team &lt;https://datacentral.org.au/about/&gt;</code>_ (such as James Tocknell).</p>
+<h2 id="environment-variables">Environment Variables</h2>
+<p>To run the web application, you will need to set the following environment variables (conda can make these <code>environment specific &lt;https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#setting-environment-variables&gt;</code>_):</p>
+<p>.. csv-table:: Envionment Variables
+   :header: "Variable","Description"</p>
+<p>"DB_USER","Postgres user name which you will set in the next section."
+   "DB_PASSWORD","Postgres password which you will set in the next section."
+   "DB_SECRET_KEY", "Django secret key. <code>Here &lt;https://saasitive.com/tutorial/generate-django-secret-key/&gt;</code>_ is a description of how to generate one."</p>
+<h2 id="start-the-postgres-database">Start the Postgres Database</h2>
+<p>The following commands will set up the Postgres database for the web app. Replace $DB_USER and $DB_PASSWORD with the environment variable values.</p>
+<p>.. code-block::</p>
+<p>sudo -u postgres psql</p>
+<p>CREATE DATABASE mwa_image_plane_db;
+   CREATE USER $DB_USER WITH ENCRYPTED PASSWORD '$DB_PASSWORD';</p>
+<p>ALTER ROLE $DB_USER SET client_encoding TO 'utf8';
+   ALTER ROLE $DB_USER SET default_transaction_isolation TO 'read committed';
+   ALTER ROLE $DB_USER SET timezone TO 'UTC';</p>
+<p>.. _create_database:</p>
+<h2 id="setup-database-for-the-first-time">Setup database for the first time</h2>
+<p>Run the following commands from the gleam_webapp subdirectory so Django can setup up the database structure and upload defaults</p>
+<p>.. code-block::</p>
+<p>python manage.py makemigrations candidate_app
+   python manage.py migrate candidate_app
+   python manage.py migrate
+   python manage.py migrate --run-syncdb</p>
+<h2 id="create-a-superuser">Create a superuser</h2>
+<p>These commands will set up a superuser account.</p>
+<p>.. code-block::</p>
+<p>python manage.py createsuperuser</p>
+<h2 id="set-up-q3c">Set up Q3C</h2>
+<p><code>Q3C &lt;https://github.com/segasai/q3c&gt;</code>_ allows spatial indexing on a sphere so that you can do quick cone searchs to find nearby sources/candidates within your database.
+The followinng commands will set it up:</p>
+<p>.. code-block::</p>
+<p>sudo -u postgres psql</p>
+<p>\c mwa_image_plane_db
+   CREATE EXTENSION q3c;
+   CREATE INDEX ON candidate_app_candidate (q3c_ang2ipix(ra_deg, dec_deg));</p>
+<h2 id="delete-postgres-database">Delete Postgres Database</h2>
+<p>Only do this is you want to restart the database!</p>
+<p>To delete the database use the following commands</p>
+<p>.. code-block::</p>
+<p>sudo -u postgres psql</p>
+<p>DROP DATABASE mwa_image_plane_db;
+   CREATE DATABASE mwa_image_plane_db;</p>
+<p>You will then have to recreate the database using the commands in :ref:<code>create_database</code></p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href=".." class="btn btn-neutral float-left" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../webapp_installation/" class="btn btn-neutral float-right" title="Installation (webapp)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../webapp_installation/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
