@@ -3,7 +3,7 @@ name = "family-archive"
 version = "0.1.0"
 description = "Django website with two main purposes: 1) To be a blog to post updates that the entire family can see. 2) To archive the family history"
 authors = ["NickSwainston <nickaswainston@gmail.com>"]
-readme = "README.md"
+readme = "../README.md"
 packages = [{include = "family_archive"}]
 
 [tool.poetry.dependencies]
@@ -12,6 +12,9 @@ django = "^4.2.1"
 python-decouple = "^3.8"
 psycopg2 = "^2.9.6"
 
+
+[tool.poetry.group.dev.dependencies]
+mkdocs = "^1.4.3"
 
 [build-system]
 requires = ["poetry-core"]

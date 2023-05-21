@@ -1,0 +1,8 @@
+site_name: "Family archive"
+site_url: https://example.com/
+theme: readthedocs
+nav:
+    - Home: index.md
+    - Installation (database): database_installation.md
+    - Installation (webapp): webapp_installation.md
+    - Running server: running_server.md

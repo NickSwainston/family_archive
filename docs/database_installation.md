@@ -15,7 +15,8 @@ Then install the python requirements (recommended in its own virtual environment
 
 .. code-block::
 
-   pip install -r gleam_webapp/requirements.txt
+   cd family_archive
+   poetry install
 
 You will also need to install django-q3c which is currently private so you will need to ask to get access from the `Data Central team <https://datacentral.org.au/about/>`_ (such as James Tocknell).
 
