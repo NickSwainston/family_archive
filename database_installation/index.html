@@ -49,15 +49,13 @@
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#dependancies">Dependancies</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#environment-variables">Environment Variables</a>
+    <li class="toctree-l2"><a class="reference internal" href="#webapp-settings">Webapp settings</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#start-the-postgres-database">Start the Postgres Database</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#setup-database-for-the-first-time">Setup database for the first time</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#create-a-superuser">Create a superuser</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#set-up-q3c">Set up Q3C</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#delete-postgres-database">Delete Postgres Database</a>
     </li>
@@ -98,58 +96,54 @@
                 <h1 id="database-installation">Database Installation</h1>
 <h2 id="dependancies">Dependancies</h2>
 <p>For Ubuntu or Debian Linux:</p>
-<p>.. code-block::</p>
-<p>sudo apt-get update
-   sudo apt-get install postgresql postgresql-contrib libpq-dev python3-dev graphviz python3-pip gosu postgresql-q3c locales</p>
+<pre><code class="language-bash">sudo apt-get update
+sudo apt-get install postgresql postgresql-contrib libpq-dev python3-dev graphviz python3-pip gosu postgresql-q3c locales
+</code></pre>
 <p>Then install the python requirements (recommended in its own virtual environment) using:</p>
-<p>.. code-block::</p>
-<p>cd family_archive
-   poetry install</p>
-<p>You will also need to install django-q3c which is currently private so you will need to ask to get access from the <code>Data Central team &lt;https://datacentral.org.au/about/&gt;</code>_ (such as James Tocknell).</p>
-<h2 id="environment-variables">Environment Variables</h2>
-<p>To run the web application, you will need to set the following environment variables (conda can make these <code>environment specific &lt;https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#setting-environment-variables&gt;</code>_):</p>
-<p>.. csv-table:: Envionment Variables
-   :header: "Variable","Description"</p>
-<p>"DB_USER","Postgres user name which you will set in the next section."
-   "DB_PASSWORD","Postgres password which you will set in the next section."
-   "DB_SECRET_KEY", "Django secret key. <code>Here &lt;https://saasitive.com/tutorial/generate-django-secret-key/&gt;</code>_ is a description of how to generate one."</p>
+<pre><code class="language-bash">cd family_archive
+poetry install
+</code></pre>
+<h2 id="webapp-settings">Webapp settings</h2>
+<p>Use <a href="https://pypi.org/project/python-decouple/">python-decouple</a> to put the webapp settings and secrets into a file in <code>family_archive/.env</code>:</p>
+<pre><code class="language-python">SECRET_KEY=[django-secret](https://miniwebtool.com/django-secret-key-generator/)
+DEBUG=True
+DB_NAME=family_archive
+DB_USER=dbuser
+DB_PASSWORD=dbpassword
+ALLOWED_HOSTS=127.0.0.1
+DB_HOST=localhost
+</code></pre>
 <h2 id="start-the-postgres-database">Start the Postgres Database</h2>
 <p>The following commands will set up the Postgres database for the web app. Replace $DB_USER and $DB_PASSWORD with the environment variable values.</p>
-<p>.. code-block::</p>
-<p>sudo -u postgres psql</p>
-<p>CREATE DATABASE mwa_image_plane_db;
-   CREATE USER $DB_USER WITH ENCRYPTED PASSWORD '$DB_PASSWORD';</p>
-<p>ALTER ROLE $DB_USER SET client_encoding TO 'utf8';
-   ALTER ROLE $DB_USER SET default_transaction_isolation TO 'read committed';
-   ALTER ROLE $DB_USER SET timezone TO 'UTC';</p>
-<p>.. _create_database:</p>
+<pre><code class="language-bash">sudo -u postgres psql
+</code></pre>
+<pre><code class="language-sql">CREATE DATABASE $DB_NAME;
+CREATE USER $DB_USER WITH ENCRYPTED PASSWORD '$DB_PASSWORD';
+
+ALTER ROLE $DB_USER SET client_encoding TO 'utf8';
+ALTER ROLE $DB_USER SET default_transaction_isolation TO 'read committed';
+ALTER ROLE $DB_USER SET timezone TO 'UTC';
+</code></pre>
 <h2 id="setup-database-for-the-first-time">Setup database for the first time</h2>
 <p>Run the following commands from the gleam_webapp subdirectory so Django can setup up the database structure and upload defaults</p>
-<p>.. code-block::</p>
-<p>python manage.py makemigrations candidate_app
-   python manage.py migrate candidate_app
-   python manage.py migrate
-   python manage.py migrate --run-syncdb</p>
+<pre><code class="language-bash">python manage.py makemigrations archive_app
+python manage.py migrate archive_app
+python manage.py migrate
+python manage.py migrate --run-syncdb
+</code></pre>
 <h2 id="create-a-superuser">Create a superuser</h2>
 <p>These commands will set up a superuser account.</p>
-<p>.. code-block::</p>
-<p>python manage.py createsuperuser</p>
-<h2 id="set-up-q3c">Set up Q3C</h2>
-<p><code>Q3C &lt;https://github.com/segasai/q3c&gt;</code>_ allows spatial indexing on a sphere so that you can do quick cone searchs to find nearby sources/candidates within your database.
-The followinng commands will set it up:</p>
-<p>.. code-block::</p>
-<p>sudo -u postgres psql</p>
-<p>\c mwa_image_plane_db
-   CREATE EXTENSION q3c;
-   CREATE INDEX ON candidate_app_candidate (q3c_ang2ipix(ra_deg, dec_deg));</p>
+<pre><code class="language-bash">python manage.py createsuperuser
+</code></pre>
 <h2 id="delete-postgres-database">Delete Postgres Database</h2>
 <p>Only do this is you want to restart the database!</p>
 <p>To delete the database use the following commands</p>
-<p>.. code-block::</p>
-<p>sudo -u postgres psql</p>
-<p>DROP DATABASE mwa_image_plane_db;
-   CREATE DATABASE mwa_image_plane_db;</p>
-<p>You will then have to recreate the database using the commands in :ref:<code>create_database</code></p>
+<pre><code class="language-sql">sudo -u postgres psql
+
+DROP DATABASE $DB_NAME;
+CREATE DATABASE $DB_NAME;
+</code></pre>
+<p>You will then have to recreate the database using the commands in <a href="./#Setup database for the first time">Setup database for the first time</a></p>
               
             </div>
           </div><footer>

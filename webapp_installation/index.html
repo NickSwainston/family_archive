@@ -94,59 +94,57 @@
                 <h1 id="web-application-installation">Web Application Installation</h1>
 <p>The following are instructions on how to setup up your nimbus instance for the first time. If you have already done this you can skip to :ref:<code>start_server</code>.</p>
 <h2 id="opening-the-nimbus-instance-firewall">Opening the Nimbus Instance Firewall</h2>
-<p>Once you've set up the instance you need to open the firewall</p>
-<p>https://support.pawsey.org.au/documentation/display/US/Allow+HTTPS+Access+To+Your+Instance</p>
-<p>Then make a costum tcp rule for ports 80 and 443, should look like this</p>
-<p>.. image:: figures/nimbus_example.png
-  :width: 800</p>
+<p>Once you've set up the instance you need to open the firewall.
+Then make a costum tcp rule for ports 80 and 443, should look like this</p>
 <p>Then follow this guide to check things step by step</p>
 <p>https://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html</p>
 <p>The following is examples of how I got it to work.</p>
 <h2 id="goal-1-ip-as-url">Goal 1: IP as URL</h2>
 <p>First try and get it to work with the nimbus IP as the URL. From directory containing manage.py run the command:</p>
-<p>.. code-block::</p>
-<p>uwsgi --socket gleam_webapp.sock --module gleam_webapp.wsgi --chmod-socket=666</p>
-<p>and nginx should look like this</p>
-<p>.. code-block::</p>
-<p>upstream django {
-      server unix:///home/ubuntu/GleamXGPMonitoring/gleam_webapp/gleam_webapp.sock;
-   }</p>
-<p>server {
-      listen      80;
-      server_name 146.118.70.58;
-      charset     utf-8;</p>
-<pre><code>  client_max_body_size 75M;
-
-  location /static {
-     alias /home/ubuntu/GleamXGPMonitoring/gleam_webapp/static;
-  }
-
-  location / {
-     uwsgi_pass  django;
-     include     /home/ubuntu/GleamXGPMonitoring/gleam_webapp/uwsgi_params;
-  }
+<pre><code class="language-bash">uwsgi --socket gleam_webapp.sock --module gleam_webapp.wsgi --chmod-socket=666
 </code></pre>
-<p>}</p>
+<p>and nginx should look like this</p>
+<pre><code class="language-nginx">upstream django {
+   server unix:///home/ubuntu/GleamXGPMonitoring/gleam_webapp/gleam_webapp.sock;
+}
+
+server {
+   listen      80;
+   server_name 146.118.70.58;
+   charset     utf-8;
+
+   client_max_body_size 75M;
+
+   location /static {
+      alias /home/ubuntu/GleamXGPMonitoring/gleam_webapp/static;
+   }
+
+   location / {
+      uwsgi_pass  django;
+      include     /home/ubuntu/GleamXGPMonitoring/gleam_webapp/uwsgi_params;
+   }
+}
+</code></pre>
 <p>and make sure the IP is in allowed hosts in settings.py:</p>
-<p>.. code-block::</p>
-<p>ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '146.118.70.58']</p>
+<pre><code class="language-python">ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '146.118.70.58']
+</code></pre>
 <p>Check if the works by using the IP as a URL in your browser.</p>
 <h2 id="static-files-errors">Static files errors</h2>
 <p>If it's not finding the static files then setup the setting.py like this</p>
-<p>.. code-block::</p>
-<p>STATIC_URL = '/static/'
-   STATICFILES_DIRS = (
-      os.path.join(BASE_DIR, "static/"),
-   )
-   STATIC_ROOT = os.path.join(BASE_DIR, "static_host/")</p>
+<pre><code class="language-python">STATIC_URL = '/static/'
+STATICFILES_DIRS = (
+   os.path.join(BASE_DIR, &quot;static/&quot;),
+)
+STATIC_ROOT = os.path.join(BASE_DIR, &quot;static_host/&quot;)
+</code></pre>
 <p>then run</p>
-<p>.. code-block::</p>
-<p>python manage.py collectstatic</p>
+<pre><code class="language-bash">python manage.py collectstatic
+</code></pre>
 <p>and update the nginx to</p>
-<p>.. code-block::</p>
-<p>location /static {
-      alias /home/ubuntu/GleamXGPMonitoring/gleam_webapp/static_host;
-   }</p>
+<pre><code class="language-nginx">location /static {
+   alias /home/ubuntu/GleamXGPMonitoring/gleam_webapp/static_host;
+}
+</code></pre>
 <h2 id="try-a-simple-domain">Try a simple domain</h2>
 <p>Grab a free subdomain from https://www.duckdns.org/domains that points to your ip then update the url in nginx's severname, and ALLOWED_HOSTS in settings.py</p>
 <h2 id="getting-a-ssl-certificate">Getting a ssl certificate</h2>

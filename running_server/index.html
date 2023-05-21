@@ -93,43 +93,42 @@
               
                 <h1 id="running-server">Running Server</h1>
 <h2 id="checking-for-errors-and-inspecting-logs">Checking for errors and inspecting logs</h2>
-<p>nginx errors are in
-.. code-block::</p>
-<p>tail -f cat /var/log/nginx/error.log</p>
+<p>nginx errors are in</p>
+<pre><code class="language-bash">tail -f cat /var/log/nginx/error.log
+</code></pre>
 <p>All commands assume you're in the gleam_webapp sub directory. You can see the output of the server with</p>
-<p>.. code-block::</p>
-<p>tail -f uwsgi-emperor.log</p>
-<p>.. _start_server:</p>
+<pre><code class="language-bash">tail -f uwsgi-emperor.log
+</code></pre>
 <h2 id="starting-the-server">Starting the server</h2>
 <p>Start the uwsgi server with</p>
-<p>.. code-block::</p>
-<p>uwsgi --ini gleam_webapp_uwsgi.ini</p>
+<pre><code class="language-bash">uwsgi --ini gleam_webapp_uwsgi.ini
+</code></pre>
 <p>This will run in the background and the following sections describe how to restarting and stopping the server.</p>
 <h2 id="restarting-the-server">Restarting the server</h2>
-<p>.. code-block::</p>
-<p>kill -HUP <code>cat /tmp/project-master.pid</code></p>
+<pre><code class="language-bash">kill -HUP `cat /tmp/project-master.pid`
+</code></pre>
 <h2 id="stopping-the-server">Stopping the server</h2>
-<p>.. code-block::</p>
-<p>uwsgi --stop /tmp/project-master.pid</p>
+<pre><code class="language-bash">uwsgi --stop /tmp/project-master.pid
+</code></pre>
 <h2 id="installing-updates">Installing updates</h2>
 <p>If the updates are small normally something as simple as the following will suffice:</p>
-<p>.. code-block::</p>
-<p>git pull
-   kill -HUP <code>cat /tmp/project-master.pid</code></p>
+<pre><code class="language-bash">git pull
+kill -HUP `cat /tmp/project-master.pid`
+</code></pre>
 <p>Larger updates may need a combination of the following commands</p>
-<p>.. code-block::</p>
-<p>git pull
-   # Stop server
-   uwsgi --stop /tmp/project-master.pid
-   # Check for new dependent software
-   pip install -r requirements.txt
-   # Check for new static files
-   python manage.py collectstatic
-   # Make any required changes to the backend database
-   python manage.py makemigrations
-   python manage.py migrate
-   # Start server
-   uwsgi --ini gleam_webapp_uwsgi.ini</p>
+<pre><code class="language-bash">git pull
+# Stop server
+uwsgi --stop /tmp/project-master.pid
+# Check for new dependent software
+pip install -r requirements.txt
+# Check for new static files
+python manage.py collectstatic
+# Make any required changes to the backend database
+python manage.py makemigrations
+python manage.py migrate
+# Start server
+uwsgi --ini gleam_webapp_uwsgi.ini
+</code></pre>
               
             </div>
           </div><footer>
