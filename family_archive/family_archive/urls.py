@@ -26,6 +26,7 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
     path('media_upload/', views.media_upload),
     path('family_tree/', views.family_tree),
+    path('post_create/', views.PostCreateView.as_view(), name='post_create'),
 ]
 
 # allow media files to be linked and viewed directly

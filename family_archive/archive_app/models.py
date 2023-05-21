@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 
+from django.contrib.auth.models import User
 from datetime import datetime
 
 
@@ -11,10 +12,24 @@ GENDERS = (
 )
 class MediaFile(models.Model):
     id = models.AutoField(primary_key=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     media_path = models.FileField(upload_to="media/", max_length=1024, null=True)
 
     class Meta:
         ordering = ['-id']
+
+
+class Post(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField()
+    images = models.ManyToManyField('MediaFile', related_name='posts')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'Post by {self.user.username}'
+
+    class Meta:
+        ordering = ['-created_at']
 
 
 class UserProfile(models.Model):

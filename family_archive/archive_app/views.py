@@ -1,8 +1,11 @@
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
+from django.views.generic.edit import CreateView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
 
 from .forms import MediaFileForm
-from .models import MediaFile, FamilyMember
+from .models import MediaFile, FamilyMember, Post
 
 
 def home_page(request):
@@ -25,8 +28,19 @@ def media_upload(request):
     context = {'form': form}
     return render(request, 'archive_app/media_upload_form.html', context)
 
+
 def success(request):
     return HttpResponse('<h1>Form saved.</h1>')
+
+
+class PostCreateView(LoginRequiredMixin, CreateView):
+    model = Post
+    fields = ['content', 'images']
+    success_url = reverse_lazy('post_list')
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super().form_valid(form)
 
 
 def family_tree(request):
