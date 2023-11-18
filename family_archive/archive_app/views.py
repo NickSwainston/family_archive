@@ -17,16 +17,23 @@ def media_upload(request):
 
     if request.method == 'POST':
         form = MediaFileForm(request.POST, request.FILES)
-        images = request.FILES.getlist('media_path')
-        if form.is_valid():
-            for i in images:
-                print(i)
-                MediaFile.objects.create(media_path=i)
-            # TODO make better
-            return HttpResponse('<h1>Form saved.</h1>')
+        input_files = request.FILES.getlist('media_path')
+        media_files = []
+        print(input_files)
+        print(type(input_files))
+        for input_file in input_files:
+            print(input_file)
+            media_files.append(MediaFile.objects.create(media_path=input_file))
+        return redirect('media_add_details', media_files=media_files)
 
     context = {'form': form}
     return render(request, 'archive_app/media_upload_form.html', context)
+
+
+def media_add_details(request):
+    media = request.GET.get('media_files')
+    context = {'media': media}
+    return render(request, 'archive_app/gallery.html', context)
 
 
 def success(request):

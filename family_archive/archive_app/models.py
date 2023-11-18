@@ -12,15 +12,17 @@ GENDERS = (
 )
 class MediaFile(models.Model):
     id = models.AutoField(primary_key=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    media_path = models.FileField(upload_to="media/", max_length=1024, null=True)
+    user_uploaded = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    date_uploaded = models.DateTimeField(auto_now_add=True)
+    date_taken = models.DateTimeField(null=True)
+    media_path = models.FileField(upload_to="media/", max_length=128, null=True)
 
     class Meta:
         ordering = ['-id']
 
 
 class Post(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     content = models.TextField()
     images = models.ManyToManyField('MediaFile', related_name='posts')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -40,6 +42,12 @@ class UserProfile(models.Model):
         primary_key=True,
     )
     email = models.EmailField(max_length=254)
+
+
+class Tag(models.Model):
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    media_file = models.ForeignKey(MediaFile, on_delete=models.DO_NOTHING)
+
 
 
 class FamilyMember(models.Model):
