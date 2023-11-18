@@ -7,7 +7,7 @@ readme = "../README.md"
 packages = [{include = "family_archive"}]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.9"
 django = "^4.2.1"
 python-decouple = "^3.8"
 psycopg2 = "^2.9.6"
