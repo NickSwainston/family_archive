@@ -11,6 +11,7 @@ python = "^3.9"
 django = "^4.2.1"
 python-decouple = "^3.8"
 psycopg2 = "^2.9.6"
+django-multiupload = "^0.6.1"
 
 
 [tool.poetry.group.dev.dependencies]

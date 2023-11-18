@@ -1,0 +1,14 @@
+{% extends 'archive_app/navbar.html' %}
+
+{% load static %}
+
+
+{% block content %}
+
+{% for m in media %}
+  <div class="gallery-item">
+    <img src="{{ m.media_path.url }}" alt="Error">
+  </div>
+{% endfor %}
+
+{% endblock %}
