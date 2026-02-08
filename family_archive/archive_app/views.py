@@ -1,44 +1,71 @@
-from django.http import HttpResponse
-from django.shortcuts import redirect, render
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.edit import CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 
+from datetime import datetime
+
 from .forms import MediaFileForm
-from .models import MediaFile, FamilyMember, Post
+from .models import MediaFile, FamilyMember, Post, UploadedBy
 
 
 def home_page(request):
     return render(request, 'archive_app/home_page.html')
 
 
-def media_upload(request):
-    form = MediaFileForm()
+def gallery(request):
+    if request.method == 'POST':
+        images = request.FILES.getlist('images')
+
+        uploaded_by = UploadedBy.objects.create(
+            user=request.user,
+            date=datetime.now(),
+        )
+        for image in images:
+            MediaFile.objects.create(
+                uploaded_by=uploaded_by,
+                date_taken=None,
+                media_path=image,
+            )
+
+        uploaded_images = MediaFile.objects.filter(uploaded_by=uploaded_by)
+        return tag_images_form(request, uploaded_images=uploaded_images)
+    else:
+        images = MediaFile.objects.all()
+        context = {'images': images}
+        return render(request, 'archive_app/gallery.html', context)
+
+
+def tag_images_form(request, uploaded_images):
+    forms = []
+
+    for image in uploaded_images:
+        form = MediaFileForm(instance=image)
+        forms.append((image, form))
+
+    context = {
+        'image_forms': forms,
+    }
+    return render(request, 'archive_app/tag_images_form.html', context)
+
+
+def update_image(request, image_id):
+    image = get_object_or_404(MediaFile, pk=image_id)
 
     if request.method == 'POST':
-        form = MediaFileForm(request.POST, request.FILES)
-        input_files = request.FILES.getlist('media_path')
-        media_files = []
-        print(input_files)
-        print(type(input_files))
-        for input_file in input_files:
-            print(input_file)
-            media_files.append(MediaFile.objects.create(media_path=input_file))
-        return redirect('media_add_details', media_files=media_files)
+        form = MediaFileForm(request.POST, instance=image)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'status': 'success'})
+    else:
+        form = MediaFileForm(instance=image)
 
-    context = {'form': form}
-    return render(request, 'archive_app/media_upload_form.html', context)
-
-
-def media_add_details(request):
-    media = request.GET.get('media_files')
-    context = {'media': media}
-    return render(request, 'archive_app/gallery.html', context)
+    return render(request, 'yourapp/update_date.html', {'form': form})
 
 
 def success(request):
     return HttpResponse('<h1>Form saved.</h1>')
-
 
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post

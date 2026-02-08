@@ -5,10 +5,31 @@
 
 {% block content %}
 
-{% for m in media %}
-  <div class="gallery-item">
-    <img src="{{ m.media_path.url }}" alt="Error">
-  </div>
-{% endfor %}
+<h2>Upload Image</h2>
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" name="images" multiple>
+    <button type="submit">Send</button>
+  </form>
+
+<h2>Gallery</h2>
+<div class="grid">
+  {% for image in images %}
+  <div class="grid-item">
+      <img src="{{ image.media_path.url }}" alt="Error">
+    </div>
+  {% endfor %}
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      var gallery = document.getElementById('image-gallery');
+      var masonry = new Masonry(gallery, {
+          itemSelector: '.grid-item',
+          columnWidth: '.grid-item',
+          percentPosition: true
+      });
+  });
+</script>
 
 {% endblock %}

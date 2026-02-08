@@ -1,0 +1,19 @@
+{% extends 'archive_app/navbar.html' %}
+
+{% block content %}
+
+<h2>Image List</h2>
+{% for image, form in image_forms %}
+  <div class="mb-3">
+    <img src="{{ image.media_path.url }}" alt="Error">
+    <p>Date Taken: {{ image.date_taken }}</p>
+    <p>ID: {{ image.pk }}</p>
+    <form method="post" hx-post="{% url 'update_image' image_id=image.pk %}" hx-swap="outerHTML">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-primary">Update Image</button>
+    </form>
+  </div>
+{% endfor %}
+
+{% endblock %}

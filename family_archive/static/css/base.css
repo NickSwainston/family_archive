@@ -33,3 +33,32 @@ div{
     --linecolour: #aeaeae;
     --heartcolour: #b00a62;
 }
+
+.masonry {
+    column-gap: 20px;
+}
+
+.grid {
+    max-width: 100%;
+    background-color: #fff;
+}
+
+.grid-item {
+    float: left;
+    width: 20%;
+    height: 300px;
+    background-color: #fff;
+}
+
+img {
+    max-width: 100%; /* Maximum width is 100% of its container */
+    /* max-height: 100%;  Maximum height is 400 pixels */
+    border: 2px solid hsla(0, 0%, 0%, 0.5);
+}
+
+/* clearfix */
+.grid:after {
+    content: '';
+    display: block;
+    clear: both;
+}

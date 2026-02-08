@@ -10,10 +10,14 @@ GENDERS = (
     ('f', 'female'),
     # TODO will add a non-binary option when needed
 )
+
+class UploadedBy(models.Model):
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    date = models.DateTimeField(auto_now_add=True)
+
+
 class MediaFile(models.Model):
-    id = models.AutoField(primary_key=True)
-    user_uploaded = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-    date_uploaded = models.DateTimeField(auto_now_add=True)
+    uploaded_by = models.ForeignKey(UploadedBy, on_delete=models.DO_NOTHING)
     date_taken = models.DateTimeField(null=True)
     media_path = models.FileField(upload_to="media/", max_length=128, null=True)
 

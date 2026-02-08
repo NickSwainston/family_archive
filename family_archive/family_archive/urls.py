@@ -24,8 +24,10 @@ urlpatterns = [
     path('', views.home_page, name='home_page'),
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
-    path('media_upload/', views.media_upload),
     path('family_tree/', views.family_tree),
+    path('gallery/', views.gallery),
+    path('tag_images/', views.tag_images_form, name='tag_images'),
+    path('update_image/<int:image_id>/', views.update_image, name='update_image'),
     path('post_create/', views.PostCreateView.as_view(), name='post_create'),
 ]
 
