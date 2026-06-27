@@ -4,5 +4,63 @@
 <title>Home Page</title>
 <div class="container py-4">
   <h1>Swainston Family Archive</h1>
+  
+  <div class="row mt-4">
+    <div class="col-md-4 mb-3">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Family Tree</h5>
+          <p class="card-text">View and explore the family tree</p>
+          <a href="/family_tree/" class="btn btn-primary">View Tree</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Gallery</h5>
+          <p class="card-text">Browse family photos and memories</p>
+          <a href="/gallery/" class="btn btn-primary">View Gallery</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Create Post</h5>
+          <p class="card-text">Share updates with the family</p>
+          <a href="/post_create/" class="btn btn-primary">New Post</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="mt-5">
+    <h2>Recent Posts</h2>
+    {% if posts %}
+      {% for post in posts %}
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">{{ post.user.username }}</h5>
+            <p class="card-text">{{ post.content }}</p>
+            <p class="text-muted small">{{ post.created_at|date:"F d, Y H:i" }}</p>
+            {% if post.images.all %}
+              <div class="row">
+                {% for image in post.images.all %}
+                  <div class="col-md-3 mb-2">
+                    <img src="{{ image.media_path.url }}" class="img-fluid" alt="Post image">
+                  </div>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p>No posts yet. <a href="/post_create/">Create the first post!</a></p>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}

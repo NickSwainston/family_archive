@@ -11,7 +11,11 @@ from .models import MediaFile, FamilyMember, Post, UploadedBy
 
 
 def home_page(request):
-    return render(request, 'archive_app/home_page.html')
+    posts = Post.objects.all()[:10]  # Get 10 most recent posts
+    context = {
+        'posts': posts,
+    }
+    return render(request, 'archive_app/home_page.html', context)
 
 
 def gallery(request):
