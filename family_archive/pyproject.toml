@@ -1,23 +1,25 @@
-[tool.poetry]
+[project]
 name = "family-archive"
 version = "0.1.0"
 description = "Django website with two main purposes: 1) To be a blog to post updates that the entire family can see. 2) To archive the family history"
-authors = ["NickSwainston <nickaswainston@gmail.com>"]
+authors = [
+    {name = "NickSwainston", email = "nickaswainston@gmail.com"}
+]
 readme = "../README.md"
-packages = [{include = "family_archive"}]
+requires-python = ">=3.9"
+dependencies = [
+    "django>=4.2.1",
+    "python-decouple>=3.8",
+    "psycopg2-binary>=2.9.6",
+    "django-multiupload>=0.6.1",
+    "uwsgi>=2.0.23",
+]
 
-[tool.poetry.dependencies]
-python = "^3.9"
-django = "^4.2.1"
-python-decouple = "^3.8"
-psycopg2 = "^2.9.6"
-django-multiupload = "^0.6.1"
-uwsgi = "^2.0.23"
-
-
-[tool.poetry.group.dev.dependencies]
-mkdocs = "^1.4.3"
+[project.optional-dependencies]
+dev = [
+    "mkdocs>=1.4.3",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
