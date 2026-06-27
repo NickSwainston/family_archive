@@ -5,7 +5,7 @@ description = "Django website with two main purposes: 1) To be a blog to post up
 authors = [
     {name = "NickSwainston", email = "nickaswainston@gmail.com"}
 ]
-readme = "../README.md"
+readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
     "django>=4.2.1",

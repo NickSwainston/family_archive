@@ -54,7 +54,6 @@ GRANT ALL ON SCHEMA public TO dbuser;
 ## Migrations
 
 ```
-cd /home/nick/code/family_archive/family_archive
 uv run python manage.py migrate
 ```
 

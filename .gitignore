@@ -1,7 +1,8 @@
-family_archive/media/*
-family_archive/static_host/*
-family_archive/.env
+media/*
+static_host/*
+.env
 **/__pycache__/
 html/
 site/
 .venv
+*.sql
