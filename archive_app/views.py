@@ -138,7 +138,14 @@ def family_tree(request):
         # finish
         this_str += "},"
         family_member_dict_strs.append(this_str)
+
+    roots = list(
+        FamilyMember.objects.filter(full_name__in=['Anthony Swainston', 'Bella Swainston'])
+        .values_list('id', flat=True)
+    )
+
     context = {
         'family_members': family_member_dict_strs,
+        'roots': roots,
     }
     return render(request, 'archive_app/family_tree.html', context)
