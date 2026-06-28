@@ -23,28 +23,28 @@ Use [python-decouple](https://pypi.org/project/python-decouple/) to put the weba
 ```python
 SECRET_KEY=[django-secret](https://miniwebtool.com/django-secret-key-generator/)
 DEBUG=True
-DB_NAME=family_archive
-DB_USER=dbuser
-DB_PASSWORD=dbpassword
+PGDATABASE=family_archive
+PGUSER=dbuser
+PGPASSWORD=dbpassword
+PGHOST=localhost
 ALLOWED_HOSTS=127.0.0.1
-DB_HOST=localhost
 ```
 
 ## Start the Postgres Database
 
-The following commands will set up the Postgres database for the web app. Replace $DB_USER and $DB_PASSWORD with the environment variable values.
+The following commands will set up the Postgres database for the web app. Replace $PGUSER and $PGPASSWORD with the environment variable values.
 
 ```bash
 sudo -u postgres psql
 ```
 
 ```sql
-CREATE DATABASE $DB_NAME;
-CREATE USER $DB_USER WITH ENCRYPTED PASSWORD '$DB_PASSWORD';
+CREATE DATABASE $PGDATABASE;
+CREATE USER $PGUSER WITH ENCRYPTED PASSWORD '$PGPASSWORD';
 
-ALTER ROLE $DB_USER SET client_encoding TO 'utf8';
-ALTER ROLE $DB_USER SET default_transaction_isolation TO 'read committed';
-ALTER ROLE $DB_USER SET timezone TO 'UTC';
+ALTER ROLE $PGUSER SET client_encoding TO 'utf8';
+ALTER ROLE $PGUSER SET default_transaction_isolation TO 'read committed';
+ALTER ROLE $PGUSER SET timezone TO 'UTC';
 ```
 
 
@@ -78,8 +78,8 @@ To delete the database use the following commands
 ```sql
 sudo -u postgres psql
 
-DROP DATABASE $DB_NAME;
-CREATE DATABASE $DB_NAME;
+DROP DATABASE $PGDATABASE;
+CREATE DATABASE $PGDATABASE;
 ```
 
 You will then have to recreate the database using the commands in [Setup database for the first time](database_installation.md#Setup database for the first time)

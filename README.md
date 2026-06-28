@@ -23,11 +23,11 @@ Set up the `.env` file
 ```
 SECRET_KEY=your-django-secret-key-here
 DEBUG=True
-DB_NAME=family_archive
-DB_USER=dbuser
-DB_PASSWORD=dbpassword
+PGDATABASE=family_archive
+PGUSER=dbuser
+PGPASSWORD=dbpassword
 ALLOWED_HOSTS=127.0.0.1,localhost
-DB_HOST=localhost
+PGHOST=localhost
 ```
 
 You can generate a SECRET_KEY at https://miniwebtool.com/django-secret-key-generator/
@@ -66,3 +66,11 @@ uv run python manage.py createsuperuser
 
 ```
 uv run python manage.py runserver
+```
+
+## Docker
+
+```
+docker build --network=host -t "$REGISTRY/family-archive:$VERSION" .
+docker push "$REGISTRY/family-archive:$VERSION"
+```
