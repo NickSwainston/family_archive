@@ -1,6 +1,7 @@
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.edit import CreateView
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 
@@ -18,6 +19,7 @@ def home_page(request):
     return render(request, 'archive_app/home_page.html', context)
 
 
+@login_required
 def gallery(request):
     if request.method == 'POST':
         images = request.FILES.getlist('images')

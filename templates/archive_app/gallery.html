@@ -16,8 +16,14 @@
 <div class="grid">
   {% for image in images %}
   <div class="grid-item">
-      <img src="{{ image.media_path.url }}" alt="Error">
-    </div>
+    {% with image.media_path.name|lower as fname %}
+      {% if ".mp4" in fname or ".mov" in fname or ".avi" in fname or ".webm" in fname or ".mkv" in fname %}
+        <video src="{{ image.media_path.url }}" controls style="max-width:100%"></video>
+      {% else %}
+        <img src="{{ image.media_path.url }}" alt="">
+      {% endif %}
+    {% endwith %}
+  </div>
   {% endfor %}
 </div>
 

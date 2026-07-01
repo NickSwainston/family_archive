@@ -13,8 +13,9 @@ RUN uv sync --frozen --no-dev --no-install-project
 COPY . .
 
 RUN uv sync --frozen --no-dev
-RUN uv run python manage.py collectstatic --noinput
+RUN SECRET_KEY=build PGDATABASE=x PGUSER=x PGPASSWORD=x PGHOST=x \
+    uv run python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
-CMD uv run gunicorn family_archive.wsgi:application --bind 0.0.0.0:8000 --workers ${GUNICORN_WORKERS:-3}
+CMD uv run gunicorn family_archive.wsgi:application --bind 0.0.0.0:8000 --workers ${GUNICORN_WORKERS:-3} --timeout ${GUNICORN_TIMEOUT:-300}
