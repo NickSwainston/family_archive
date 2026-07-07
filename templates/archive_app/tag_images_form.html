@@ -2,18 +2,174 @@
 
 {% block content %}
 
-<h2>Image List</h2>
-{% for image, form in image_forms %}
-  <div class="mb-3">
-    <img src="{{ image.media_path.url }}" alt="Error">
-    <p>Date Taken: {{ image.date_taken }}</p>
-    <p>ID: {{ image.pk }}</p>
-    <form method="post" hx-post="{% url 'update_image' image_id=image.pk %}" hx-swap="outerHTML">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit" class="btn btn-primary">Update Image</button>
-    </form>
+<!-- flatpickr -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
+
+<div class="bg-white border-b border-slate-100">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Tag your photos</h1>
+    <p class="text-slate-500 text-sm mt-1">
+      When were these taken? Add a date so memories are easier to find later.
+    </p>
   </div>
-{% endfor %}
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    {% for image, form in image_forms %}
+    <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100 overflow-hidden flex flex-col">
+
+      <!-- Photo -->
+      <div class="aspect-video overflow-hidden bg-slate-100 shrink-0">
+        <img src="{{ image.media_path.url }}" alt=""
+             class="w-full h-full object-cover hover:scale-105 transition-transform duration-500">
+      </div>
+
+      <!-- Form -->
+      <div class="p-4 flex flex-col flex-1">
+        <form method="post"
+              hx-post="{% url 'update_image' image_id=image.pk %}"
+              hx-swap="outerHTML"
+              class="flex flex-col flex-1 gap-3">
+          {% csrf_token %}
+
+          {% for field in form %}
+          <div class="flex-1">
+            <label for="{{ field.id_for_label }}"
+                   class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+              {{ field.label }}
+            </label>
+
+            <!-- Date input wrapper with calendar icon -->
+            <div class="relative">
+              <div class="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+                <svg class="w-4 h-4 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z"/>
+                </svg>
+              </div>
+              {{ field }}
+              <!-- Clear button -->
+              <button type="button"
+                      class="clear-date absolute inset-y-0 right-3 flex items-center text-slate-300 hover:text-slate-500 transition-colors"
+                      title="Clear date"
+                      data-target="{{ field.id_for_label }}">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            {% if field.errors %}
+            <p class="mt-1.5 text-xs text-red-500">{{ field.errors|join:", " }}</p>
+            {% endif %}
+          </div>
+          {% endfor %}
+
+          <button type="submit"
+                  class="w-full py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold transition-colors mt-auto">
+            Save
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<style>
+  /* Date input styling */
+  input.datepicker {
+    width: 100%;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 0.6rem 2.25rem;   /* left + right room for icons */
+    font-size: 0.875rem;
+    font-family: inherit;
+    color: #1e293b;
+    background: white;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    cursor: pointer;
+  }
+  input.datepicker:focus {
+    border-color: #00a6ad;
+    box-shadow: 0 0 0 3px rgba(0,166,173,0.12);
+  }
+  input.datepicker::placeholder { color: #94a3b8; }
+
+  /* flatpickr theme overrides to match brand */
+  .flatpickr-calendar {
+    font-family: 'Inter', system-ui, sans-serif;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+    border: 1px solid #e2e8f0;
+  }
+  .flatpickr-day.selected,
+  .flatpickr-day.selected:hover {
+    background: #00a6ad;
+    border-color: #00a6ad;
+  }
+  .flatpickr-day:hover {
+    background: #f0fdfe;
+    border-color: #f0fdfe;
+  }
+  .flatpickr-day.today {
+    border-color: #00a6ad;
+  }
+  .flatpickr-day.today:hover {
+    background: #ccf7fa;
+    border-color: #ccf7fa;
+    color: #006b71;
+  }
+  .flatpickr-months .flatpickr-month,
+  .flatpickr-weekdays,
+  span.flatpickr-weekday {
+    background: #f8fafc;
+    color: #475569;
+  }
+  .flatpickr-current-month .flatpickr-monthDropdown-months,
+  .flatpickr-current-month input.cur-year {
+    color: #0f172a;
+    font-weight: 700;
+  }
+  .flatpickr-prev-month svg,
+  .flatpickr-next-month svg {
+    fill: #64748b;
+  }
+  .flatpickr-prev-month:hover svg,
+  .flatpickr-next-month:hover svg {
+    fill: #00a6ad;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+
+    // Initialise flatpickr on every date input
+    document.querySelectorAll('.datepicker').forEach(function (input) {
+      flatpickr(input, {
+        dateFormat: 'Y-m-d',
+        allowInput: true,
+        disableMobile: false,
+        animate: true,
+      });
+    });
+
+    // Clear buttons
+    document.querySelectorAll('.clear-date').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var target = document.getElementById(btn.dataset.target);
+        if (target && target._flatpickr) {
+          target._flatpickr.clear();
+        } else if (target) {
+          target.value = '';
+        }
+      });
+    });
+
+  });
+</script>
 
 {% endblock %}

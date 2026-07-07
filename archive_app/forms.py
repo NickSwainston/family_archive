@@ -11,4 +11,11 @@ class MediaFileForm(forms.ModelForm):
     class Meta:
         model = MediaFile
         fields = ['date_taken']
-        widgets = {'date_taken': forms.DateInput(attrs={'type': 'date'})}
+        widgets = {
+            'date_taken': forms.DateInput(attrs={
+                'type': 'text',
+                'placeholder': 'Pick a date…',
+                'class': 'datepicker',
+                'autocomplete': 'off',
+            })
+        }

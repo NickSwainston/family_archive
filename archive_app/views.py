@@ -43,9 +43,11 @@ def gallery(request):
         return render(request, 'archive_app/gallery.html', context)
 
 
-def tag_images_form(request, uploaded_images):
-    forms = []
+def tag_images_form(request, uploaded_images=None):
+    if uploaded_images is None:
+        return redirect('/gallery/')
 
+    forms = []
     for image in uploaded_images:
         form = MediaFileForm(instance=image)
         forms.append((image, form))
@@ -67,7 +69,7 @@ def update_image(request, image_id):
     else:
         form = MediaFileForm(instance=image)
 
-    return render(request, 'yourapp/update_date.html', {'form': form})
+    return render(request, 'archive_app/tag_images_form.html', {'image_forms': [(image, form)]})
 
 
 def success(request):
