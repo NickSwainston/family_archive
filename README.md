@@ -70,10 +70,11 @@ uv run python manage.py runserver
 
 ## Docker
 
+Bump the version, commit, tag, build and push to the registry:
 ```
-docker build --network=host -t "$REGISTRY/family-archive:$VERSION" .
-docker push "$REGISTRY/family-archive:$VERSION"
+make release REGISTRY=host:port BUMP=patch  # or minor/major
 ```
+`make push` builds and pushes the current version without bumping.
 
 ## Event timeline
 
