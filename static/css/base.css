@@ -1,22 +1,112 @@
-/* Family tree colour variables (used by familytree.js template) */
-:root {
-    --maleblue:    #232a9c;
-    --femalepurple:#603F8B;
-    --heartcolour: #b00a62;
-    --linecolour:  #aeaeae;
-}
-
-/* ---- Family tree page ---- */
+/* ---- Family tree page (family-chart) ---- */
 #tree-wrap {
-    background: #f8fafc !important;
+    height: calc(100vh - 4rem);
 }
-#tree-wrap, #tree-wrap * {
-    /* prevent Tailwind base from leaking in */
-}
-#tree {
+#tree.f3 {
+    --male-color: #00a6ad;      /* brand-500 */
+    --female-color: #f43f5e;    /* rose-500 */
+    --background-color: #f8fafc; /* slate-50 */
+    --text-color: #1e293b;      /* slate-800 */
     width: 100%;
     height: 100%;
-    background: #f8fafc !important;
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+#tree.f3 .link {
+    stroke: #cbd5e1; /* slate-300 */
+    stroke-width: 1.5px;
+}
+#tree.f3 .link.f3-path-to-main {
+    stroke: #00a6ad;
+    stroke-width: 3px;
+}
+#tree.f3 div.mini-tree line,
+#tree.f3 div.mini-tree path {
+    stroke: #94a3b8; /* slate-400 */
+}
+#tree.f3 div.card-male .card-inner.tree-card,
+#tree.f3 div.card-female .card-inner.tree-card {
+    background-color: #ffffff;
+}
+.tree-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 220px;
+    padding: 0.75rem;
+    background: #ffffff;
+    border-radius: 1rem;
+    border-top: 4px solid var(--male-color);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.card-female .tree-card {
+    border-top-color: var(--female-color);
+}
+.tree-card:hover {
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.10);
+    transform: translateY(-2px);
+}
+.card-main .tree-card {
+    box-shadow: 0 0 0 3px #99eef5, 0 10px 20px rgba(15, 23, 42, 0.10); /* brand-200 ring */
+}
+.tree-card-photo {
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+    border-radius: 9999px;
+    object-fit: cover;
+    background: #e2e8f0;
+}
+.tree-card-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25;
+    color: #1e293b;
+    overflow-wrap: anywhere;
+}
+.tree-card-years {
+    margin-top: 0.125rem;
+    font-size: 0.75rem;
+    color: #64748b; /* slate-500 */
+}
+
+#tree.f3 .f3-autocomplete-cont {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    width: 16rem;
+}
+#tree.f3 .f3-autocomplete {
+    background: #ffffff;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    outline: 1px solid #e2e8f0; /* slate-200 */
+    overflow: hidden;
+}
+#tree.f3 .f3-autocomplete input,
+#tree.f3 .f3-autocomplete-items,
+#tree.f3 .f3-autocomplete-item > div {
+    background: #ffffff;
+    border: none;
+}
+#tree.f3 .f3-autocomplete input {
+    padding: 0.625rem 2.25rem 0.625rem 0.875rem;
+    font-size: 0.875rem;
+}
+#tree.f3 .f3-autocomplete-toggle {
+    color: #94a3b8;
+}
+#tree.f3 .f3-autocomplete-item > div {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.875rem;
+    border-top: 1px solid #f1f5f9; /* slate-100 */
+}
+#tree.f3 .f3-autocomplete-item > div:hover,
+#tree.f3 .f3-autocomplete-item.f3-selected > div {
+    background: #f0fdfe; /* brand-50 */
+    color: #008a90;      /* brand-600 */
 }
 
 /* ---- Masonry gallery ---- */

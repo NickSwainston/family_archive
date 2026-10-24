@@ -8,7 +8,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .models import Event, MediaFile, UploadedBy
+from .models import Event, MediaFile, UploadedBy, FamilyMember
 
 # 1x1 GIF so uploads are real image bytes
 PIXEL = (b'GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04'
@@ -152,3 +152,28 @@ class MediaServingTests(TestCase):
         resp = self.client.get(media.media_path.url)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(b''.join(resp.streaming_content), PIXEL)
+
+
+class FamilyTreeTests(TestCase):
+    def setUp(self):
+        self.dad = FamilyMember.objects.create(full_name="Dad O'Brien", gender='m', email='dad@example.com')
+        self.mum = FamilyMember.objects.create(full_name='Mum', gender='f', partner=self.dad)
+        self.kid = FamilyMember.objects.create(full_name='Kid', gender='f', father=self.dad, mother=self.mum)
+
+    def people(self, response):
+        return {p['id']: p for p in response.context['tree_data']}
+
+    def test_relationships_are_symmetric(self):
+        people = self.people(self.client.get('/family_tree/'))
+        dad, mum, kid = (people[str(m.id)] for m in (self.dad, self.mum, self.kid))
+        self.assertEqual(dad['rels']['spouses'], [str(self.mum.id)])
+        self.assertEqual(mum['rels']['spouses'], [str(self.dad.id)])
+        self.assertEqual(kid['rels']['parents'], [str(self.dad.id), str(self.mum.id)])
+        self.assertEqual(dad['rels']['children'], [str(self.kid.id)])
+        self.assertEqual(dad['data']['gender'], 'M')
+
+    def test_contact_details_only_for_logged_in_users(self):
+        dad_id = str(self.dad.id)
+        self.assertNotIn('email', self.people(self.client.get('/family_tree/'))[dad_id]['data'])
+        self.client.force_login(User.objects.create_user('member'))
+        self.assertEqual(self.people(self.client.get('/family_tree/'))[dad_id]['data']['email'], 'dad@example.com')

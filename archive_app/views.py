@@ -104,70 +104,62 @@ class PostCreateView(LoginRequiredMixin, CreateView):
 
 def family_tree(request):
     family_members = FamilyMember.objects.all()
-    family_member_dict_strs = []
+    show_contact = request.user.is_authenticated
+
+    def fmt(date):
+        return date.strftime('%-d %b %Y') if date else None
+
+    # family-chart wants symmetric relationships, so collect them from both sides
+    spouses = {fm.id: [] for fm in family_members}
+    children = {fm.id: [] for fm in family_members}
     for fm in family_members:
-        this_str = f"{{ id: {fm.id}, gender: '{fm.get_gender_display()}', name: '{fm.full_name}'"
-        if len(str(fm.profile_picture)) == 0:
-            this_str += f", image: '/static/default_profile.jpg'"
-        else:
-            this_str += f", image: '{fm.profile_picture.url}'"
+        for partner_id in (fm.partner_id, fm.partner2_id):
+            if partner_id in spouses:
+                for a, b in ((fm.id, partner_id), (partner_id, fm.id)):
+                    if b not in spouses[a]:
+                        spouses[a].append(b)
+        for parent_id in (fm.father_id, fm.mother_id):
+            if parent_id in children:
+                children[parent_id].append(fm.id)
 
-        # partners
-        if fm.partner is not None:
-            if fm.partner2 is None:
-                # only one partner
-                this_str += f", pids: [{fm.partner.id}]"
-            else:
-                this_str += f", pids: [{fm.partner.id}, {fm.partner2.id}]"
-            # Marriage one
-            this_str += f", partner: '{fm.partner.full_name}'"
-            if fm.marriage_date is not None:
-                this_str += f", marriage_date: '{fm.marriage_date}'"
-            if fm.marriage_location is not None:
-                this_str += f', marriage_location: "{fm.marriage_location}"'
+    tree_data = []
+    for fm in family_members:
+        marriages = []
+        for partner, date, location in (
+            (fm.partner, fm.marriage_date, fm.marriage_location),
+            (fm.partner2, fm.marriage_date2, fm.marriage_location2),
+        ):
+            if partner is not None:
+                marriages.append({'partner': partner.full_name, 'date': fmt(date), 'location': location})
+        data = {
+            'gender': fm.gender.upper(),
+            'name': fm.full_name or '',
+            'avatar': fm.profile_picture.url if fm.profile_picture else '',
+            'birth_year': fm.birth_date.year if fm.birth_date else None,
+            'death_year': fm.death_date.year if fm.death_date else None,
+            'birth_date': fmt(fm.birth_date),
+            'birth_location': fm.birth_location,
+            'death_date': fmt(fm.death_date),
+            'marriages': marriages,
+        }
+        if show_contact:
+            data['email'] = fm.email
+            data['phone_number'] = fm.phone_number
+        tree_data.append({
+            'id': str(fm.id),
+            'data': data,
+            'rels': {
+                'parents': [str(p) for p in (fm.father_id, fm.mother_id) if p in spouses],
+                'spouses': [str(s) for s in spouses[fm.id]],
+                'children': [str(c) for c in children[fm.id]],
+            },
+        })
 
-            if fm.partner2 is not None:
-                # Marriage two
-                this_str += f", second_partner: '{fm.partner2.full_name}'"
-                if fm.marriage_date2 is not None:
-                    this_str += f", second_marriage_date: '{fm.marriage_date2}'"
-                if fm.marriage_location2 is not None:
-                    this_str += f', second_marriage_location: "{fm.marriage_location2}"'
-
-        # parents
-        if fm.father is not None:
-            this_str += f", fid: {fm.father.id}"
-            this_str += f", father: '{fm.father.full_name}'"
-        if fm.mother is not None:
-            this_str += f", mid: {fm.mother.id}"
-            this_str += f", mother: '{fm.mother.full_name}'"
-
-        # birth and death
-        if fm.birth_date is not None:
-            this_str += f", birthDate: '{fm.birth_date}'"
-        if fm.birth_location is not None:
-            this_str += f', birth_location: "{fm.birth_location}"'
-        if fm.death_date is not None:
-            this_str += f", deathDate: '{fm.death_date}'"
-
-        # Contact info
-        if fm.email is not None:
-            this_str += f", email: '{fm.email}'"
-        if fm.phone_number is not None:
-            this_str += f", phone_number: '{fm.phone_number}'"
-
-        # finish
-        this_str += "},"
-        family_member_dict_strs.append(this_str)
-
-    roots = list(
-        FamilyMember.objects.filter(full_name__in=['Anthony Swainston', 'Bella Swainston'])
-        .values_list('id', flat=True)
-    )
+    root = FamilyMember.objects.filter(full_name='Anthony Swainston').values_list('id', flat=True).first()
 
     context = {
-        'family_members': family_member_dict_strs,
-        'roots': roots,
+        'tree_data': tree_data,
+        'main_id': str(root) if root else None,
     }
     return render(request, 'archive_app/family_tree.html', context)
 
