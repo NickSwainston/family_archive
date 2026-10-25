@@ -91,6 +91,11 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "static/"),
 )
 STATIC_ROOT = os.path.join(BASE_DIR, "static_host/")
+# Hashed filenames so browsers and proxies never serve stale CSS/JS after a release
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
 
 # In the Docker image (STATIC_HASHED=True) collectstatic writes content-hashed copies, e.g. media.3f9a1c.js,
 # and {% static %} links to them, so each deploy gets new URLs and browsers/Cloudflare never serve stale JS/CSS.

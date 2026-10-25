@@ -154,6 +154,11 @@ class MediaServingTests(TestCase):
         self.assertEqual(b''.join(resp.streaming_content), PIXEL)
 
 
+# The manifest only exists after collectstatic
+@override_settings(STORAGES={
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+})
 class FamilyTreeTests(TestCase):
     def setUp(self):
         self.dad = FamilyMember.objects.create(full_name="Dad O'Brien", gender='m', email='dad@example.com')

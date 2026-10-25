@@ -1,0 +1,7 @@
+.git
+.venv
+.claude
+static_host
+*.sql
+.env
+media
