@@ -1,7 +1,11 @@
 .git
 .venv
 .claude
-static_host
-*.sql
 .env
+static_host
 media
+*.sql
+*.dump
+*.sqlite3
+family_archive/*.json
+**/__pycache__/
