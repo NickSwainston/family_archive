@@ -104,3 +104,41 @@ class EventViewTests(TestCase):
         self.assertEqual(resp.status_code, 302)
         event.refresh_from_db()
         self.assertEqual(event.title, 'Our wedding')
+
+
+@override_settings(MEDIA_ROOT=TMP_MEDIA)
+class PerFileUploadTests(TestCase):
+    """The browser uploads one file per request to stay under Cloudflare's 100 MB limit."""
+    AJAX = {'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest'}
+
+    def setUp(self):
+        self.user = User.objects.create_user('alice')
+        self.client.force_login(self.user)
+
+    def test_gallery_upload_returns_ids_and_tag_page_accepts_them(self):
+        ids = [self.client.post('/gallery/', {'images': [upload()]}, **self.AJAX).json()['ids'][0] for _ in range(2)]
+        resp = self.client.get(reverse('tag_images'), {'ids': ','.join(map(str, ids))})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.context['image_forms']), 2)
+
+    def test_tag_page_ignores_other_users_uploads(self):
+        other = User.objects.create_user('bob')
+        media = MediaFile.objects.create(uploaded_by=UploadedBy.objects.create(user=other), media_path=upload())
+        resp = self.client.get(reverse('tag_images'), {'ids': str(media.id)})
+        self.assertRedirects(resp, '/gallery/', fetch_redirect_response=False)
+
+    def test_create_event_then_upload_files_separately(self):
+        resp = self.client.post(reverse('event_create'), {
+            'title': 'Picnic', 'place': '', 'start_date': '2025-02-01', 'end_date': '', 'description': '',
+        }, **self.AJAX)
+        upload_url = resp.json()['upload_url']
+        for name in ('a.gif', 'b.gif', 'c.gif'):
+            self.assertEqual(len(self.client.post(upload_url, {'images': [upload(name)]}, **self.AJAX).json()['ids']), 1)
+        self.assertEqual(Event.objects.get(title='Picnic').images.count(), 3)
+
+    def test_create_event_ajax_validation_errors(self):
+        resp = self.client.post(reverse('event_create'), {
+            'title': 'Bad', 'start_date': '2025-02-05', 'end_date': '2025-02-01',
+        }, **self.AJAX)
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn('end_date', resp.json()['errors'])

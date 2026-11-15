@@ -93,7 +93,7 @@
     <h2 class="text-xl font-bold text-slate-900 mb-1">Upload photos &amp; videos</h2>
     <p class="text-sm text-slate-500 mb-6">Drag and drop files, or click to choose. Supports JPG, PNG, GIF, MP4, MOV and more.</p>
 
-    <form method="POST" enctype="multipart/form-data" id="upload-form">
+    <form method="POST" enctype="multipart/form-data" id="upload-form" data-done-url="{% url 'tag_images' %}?ids=">
       {% csrf_token %}
       <input type="file" id="file-input" name="images" multiple accept="image/*,video/*" class="hidden">
 

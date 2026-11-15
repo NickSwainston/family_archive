@@ -13,9 +13,13 @@ RUN uv sync --frozen --no-dev --no-install-project
 COPY . .
 
 RUN uv sync --frozen --no-dev
-RUN SECRET_KEY=build PGDATABASE=x PGUSER=x PGPASSWORD=x PGHOST=x \
+# Placeholder values so settings.py can load; .env is excluded by .dockerignore and real values come at runtime
+RUN SECRET_KEY=build DEBUG=False ALLOWED_HOSTS=localhost PGDATABASE=x PGUSER=x PGPASSWORD=x PGHOST=x \
     uv run python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
-CMD uv run gunicorn family_archive.wsgi:application --bind 0.0.0.0:8000 --workers ${GUNICORN_WORKERS:-3} --timeout ${GUNICORN_TIMEOUT:-300}
+# Exec form so signals are delivered properly. `sh -c` is kept only to expand the GUNICORN_* defaults;
+# `exec` then replaces the shell so gunicorn runs as PID 1 and receives SIGTERM for a graceful shutdown.
+# The venv binary is called directly (not `uv run`) so no extra process sits in between.
+CMD ["sh", "-c", "exec /app/.venv/bin/gunicorn family_archive.wsgi:application --bind 0.0.0.0:8000 --workers ${GUNICORN_WORKERS:-3} --timeout ${GUNICORN_TIMEOUT:-300}"]

@@ -3,7 +3,7 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.edit import CreateView
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 
 from datetime import datetime
 from itertools import groupby
@@ -14,6 +14,11 @@ from django.db.models import Count, Prefetch
 
 from .forms import MediaFileForm, EventForm
 from .models import MediaFile, FamilyMember, Post, UploadedBy, Event
+
+
+def is_ajax(request):
+    """True for the per-file uploads sent by static/js/media.js."""
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
 
 def save_uploaded_media(user, files):
@@ -39,6 +44,8 @@ def gallery(request):
         images = request.FILES.getlist('images')
 
         uploaded = save_uploaded_media(request.user, images)
+        if is_ajax(request):
+            return JsonResponse({'ids': [m.id for m in uploaded]})
         uploaded_images = MediaFile.objects.filter(id__in=[m.id for m in uploaded])
         return tag_images_form(request, uploaded_images=uploaded_images)
     else:
@@ -47,8 +54,12 @@ def gallery(request):
         return render(request, 'archive_app/gallery.html', context)
 
 
+@login_required
 def tag_images_form(request, uploaded_images=None):
     if uploaded_images is None:
+        ids = [int(i) for i in request.GET.get('ids', '').split(',') if i.isdigit()]
+        uploaded_images = MediaFile.objects.filter(id__in=ids, uploaded_by__user=request.user).order_by('id')
+    if not uploaded_images:
         return redirect('/gallery/')
 
     forms = []
@@ -189,8 +200,11 @@ def event_detail(request, event_id):
     if request.method == 'POST':
         # Any logged-in family member can add photos to an event
         files = request.FILES.getlist('images')
+        uploaded = save_uploaded_media(request.user, files) if files else []
+        event.images.add(*uploaded)
+        if is_ajax(request):
+            return JsonResponse({'ids': [m.id for m in uploaded]})
         if files:
-            event.images.add(*save_uploaded_media(request.user, files))
             messages.success(request, f"Added {len(files)} file{'s' if len(files) != 1 else ''}.")
         return redirect('event_detail', event_id=event.id)
 
@@ -211,10 +225,16 @@ def event_create(request):
             event = form.save(commit=False)
             event.created_by = request.user
             event.save()
+            if is_ajax(request):
+                # The browser creates the event first, then uploads each photo to the event page
+                url = reverse('event_detail', args=[event.id])
+                return JsonResponse({'upload_url': url, 'redirect': url})
             files = request.FILES.getlist('images')
             if files:
                 event.images.add(*save_uploaded_media(request.user, files))
             return redirect('event_detail', event_id=event.id)
+        if is_ajax(request):
+            return JsonResponse({'errors': form.errors}, status=400)
     else:
         form = EventForm()
     return render(request, 'archive_app/event_form.html', {'form': form, 'event': None})
