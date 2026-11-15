@@ -225,4 +225,10 @@ def set_profile_photo(request, member_id):
     except PhotoSearchError as e:
         error = str(e)
 
-    return render(request, 'archive_app/_profile_photo_card.html', {'member': member, 'error': error})
+    response = render(request, 'archive_app/_profile_photo_card.html', {'member': member, 'error': error})
+    if not error:
+        # htmx fires this as a DOM event; the family tree page listens for it to swap the photo in place
+        response['HX-Trigger'] = json.dumps({
+            'profilePhotoChanged': {'id': str(member.id), 'url': member.profile_picture.url},
+        })
+    return response

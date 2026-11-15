@@ -267,3 +267,27 @@ class ProfilePhotoPickerTests(TestCase):
         for url in ('http://127.0.0.1/x.jpg', 'http://10.0.0.5/x.jpg', 'file:///etc/passwd', 'ftp://example.com/x.jpg'):
             with self.assertRaises(PhotoSearchError, msg=url):
                 download_image(url)
+
+    def test_pick_sends_event_for_family_tree_page(self):
+        media = MediaFile.objects.create(uploaded_by=UploadedBy.objects.create(user=self.admin), media_path=upload('arch.gif'))
+        resp = self.client.post(reverse('set_profile_photo', args=[self.member.id]), {'media_id': media.id})
+        event = json.loads(resp['HX-Trigger'])['profilePhotoChanged']
+        self.member.refresh_from_db()
+        self.assertEqual(event, {'id': str(self.member.id), 'url': self.member.profile_picture.url})
+
+    def test_failed_pick_sends_no_event(self):
+        from .profile_photos import PhotoSearchError
+        with self._mock.patch('archive_app.profile_photos.download_image', side_effect=PhotoSearchError('nope')):
+            resp = self.client.post(reverse('set_profile_photo', args=[self.member.id]), {'image_url': 'https://x/y.jpg'})
+        self.assertNotIn('HX-Trigger', resp)
+        self.assertContains(resp, 'nope')
+
+    def test_family_tree_shows_photo_button_only_to_staff(self):
+        resp = self.client.get('/family_tree/')
+        self.assertContains(resp, 'const CAN_EDIT_PHOTOS = true;')
+        self.assertContains(resp, 'id="photo-modal"')
+        self.assertContains(resp, '/profile_photos/MEMBER_ID/candidates/'.replace('MEMBER_ID', '0'))
+        self.client.force_login(User.objects.create_user('family'))
+        resp = self.client.get('/family_tree/')
+        self.assertContains(resp, 'const CAN_EDIT_PHOTOS = false;')
+        self.assertNotContains(resp, 'id="photo-modal"')

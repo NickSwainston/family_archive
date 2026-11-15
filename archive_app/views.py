@@ -160,6 +160,8 @@ def family_tree(request):
     context = {
         'tree_data': tree_data,
         'main_id': str(root) if root else None,
+        # Staff get a "Find photos" button in the person panel (see profile_photos.py)
+        'can_edit_photos': request.user.is_staff,
     }
     return render(request, 'archive_app/family_tree.html', context)
 

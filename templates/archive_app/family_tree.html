@@ -19,6 +19,21 @@
     </aside>
 </div>
 
+{% if can_edit_photos %}
+<!-- Profile photo picker (staff): the candidates partial from profile_photos.py is loaded into #photo-modal-body -->
+<div id="photo-modal" class="hidden fixed inset-0 z-[60] bg-slate-900/60 flex items-start justify-center overflow-y-auto p-4 sm:p-8"
+     onclick="if (event.target === this) closePhotoModal()">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl p-5 relative">
+        <button onclick="closePhotoModal()" class="absolute top-3 right-3 p-1 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label="Close">
+            <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
+        </button>
+        <h2 class="text-lg font-bold text-slate-800 pr-8">Choose a photo for <span id="photo-modal-name"></span></h2>
+        <p class="text-sm text-slate-500">Click the right picture to use it. Check the source link if you're unsure it's the same person.</p>
+        <div id="photo-modal-body"></div>
+    </div>
+</div>
+{% endif %}
+
 {{ tree_data|json_script:"tree-data" }}
 {{ main_id|json_script:"main-id" }}
 <script>
@@ -26,6 +41,9 @@
     const treeData = JSON.parse(document.getElementById('tree-data').textContent);
     const mainId = JSON.parse(document.getElementById('main-id').textContent);
     const peopleById = Object.fromEntries(treeData.map(p => [p.id, p]));
+    const CAN_EDIT_PHOTOS = {{ can_edit_photos|yesno:"true,false" }};
+    // Candidates URL for one member; MEMBER_ID is swapped for the real id
+    const CANDIDATES_URL = "{% url 'profile_photo_candidates' 0 %}".replace('/0/', '/MEMBER_ID/');
 
     // family-chart inserts card HTML with innerHTML, so escape everything from the database
     function esc(value) {
@@ -70,6 +88,9 @@
                 <img src="${esc(p.avatar || DEFAULT_AVATAR)}" onerror="this.onerror=null;this.src=DEFAULT_AVATAR" alt="" class="w-24 h-24 rounded-full object-cover ring-4 ${p.gender === 'F' ? 'ring-rose-200' : 'ring-brand-200'}">
                 <h2 class="mt-3 text-lg font-bold text-slate-800">${esc(p.name)}</h2>
                 <p class="text-sm text-slate-500">${esc(lifespan(p))}</p>
+                ${CAN_EDIT_PHOTOS ? `<button onclick="openPhotoModal('${esc(id)}')"
+                    class="mt-3 px-4 py-1.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white text-xs font-semibold transition-colors">
+                    ${p.avatar ? 'Change photo' : 'Find photos'}</button>` : ''}
             </div>
             <dl class="space-y-3">
                 ${row('Born', [p.birth_date, p.birth_location].filter(Boolean).join(', '))}
@@ -84,6 +105,42 @@
 
     document.getElementById('person-panel-close').addEventListener('click', () => {
         document.getElementById('person-panel').classList.add('hidden');
+    });
+
+    // ---- Profile photo picker (staff only) ----
+    function openPhotoModal(id) {
+        const modal = document.getElementById('photo-modal');
+        document.getElementById('photo-modal-name').textContent = peopleById[id].data.name;
+        // The candidates partial targets #member-<id>, #candidates-<id> and #loading-<id>, so provide them here
+        document.getElementById('photo-modal-body').innerHTML = `
+            <div id="member-${id}">
+                <p id="loading-${id}" class="htmx-indicator text-sm text-slate-400 mt-3">Searching…</p>
+                <div id="candidates-${id}"><p class="text-sm text-slate-400 mt-4">Searching…</p></div>
+            </div>`;
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        htmx.ajax('GET', CANDIDATES_URL.replace('MEMBER_ID', id), {target: `#candidates-${id}`});
+    }
+
+    function closePhotoModal() {
+        const modal = document.getElementById('photo-modal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+        document.getElementById('photo-modal-body').innerHTML = '';
+        document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closePhotoModal(); });
+
+    // Sent by set_profile_photo via the HX-Trigger header once a photo is saved
+    document.body.addEventListener('profilePhotoChanged', e => {
+        const {id, url} = e.detail;
+        peopleById[id].data.avatar = url;
+        const datum = chart.store.getDatum(id);   // the chart's own copy, in case it isn't the same object
+        if (datum) datum.data.avatar = url;
+        chart.updateTree({initial: false});
+        showPerson(id);
+        // Fired on the clicked form before htmx swaps the response in; close once that swap is done
+        setTimeout(closePhotoModal, 0);
     });
 
     const chart = f3.createChart('#tree', treeData)
