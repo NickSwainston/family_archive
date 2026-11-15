@@ -19,7 +19,7 @@ import re
 from django.urls import path, include, re_path
 from django.conf import settings
 
-from archive_app import views
+from archive_app import views, profile_photos
 
 urlpatterns = [
     path('', views.home_page, name='home_page'),
@@ -34,6 +34,9 @@ urlpatterns = [
     path('events/new/', views.event_create, name='event_create'),
     path('events/<int:event_id>/', views.event_detail, name='event_detail'),
     path('events/<int:event_id>/edit/', views.event_edit, name='event_edit'),
+    path('profile_photos/', profile_photos.profile_photos, name='profile_photos'),
+    path('profile_photos/<int:member_id>/candidates/', profile_photos.profile_photo_candidates, name='profile_photo_candidates'),
+    path('profile_photos/<int:member_id>/set/', profile_photos.set_profile_photo, name='set_profile_photo'),
 ]
 
 # Serve uploaded media (photos/videos) from MEDIA_ROOT. The static() helper only works when DEBUG=True,

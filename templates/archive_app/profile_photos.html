@@ -1,0 +1,27 @@
+{% extends 'archive_app/navbar.html' %}
+
+{% block content %}
+
+<div class="bg-white border-b border-slate-100">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Profile photos</h1>
+    <p class="text-slate-500 text-sm mt-1">
+      {{ missing_count }} of {{ total_count }} people in the family tree still need a photo.
+      Click <span class="font-semibold">Find photos</span>, then click the right picture to use it.
+    </p>
+    <div class="flex gap-2 mt-4 text-sm">
+      <a href="?" class="px-3 py-1 rounded-full {% if not show_all %}bg-brand-500 text-white{% else %}bg-slate-100 text-slate-600{% endif %}">Missing a photo</a>
+      <a href="?all=1" class="px-3 py-1 rounded-full {% if show_all %}bg-brand-500 text-white{% else %}bg-slate-100 text-slate-600{% endif %}">Everyone</a>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-4">
+  {% for member in members %}
+    {% include 'archive_app/_profile_photo_card.html' %}
+  {% empty %}
+    <p class="text-center text-slate-400 py-16">Everyone has a profile photo 🎉</p>
+  {% endfor %}
+</div>
+
+{% endblock %}

@@ -170,3 +170,7 @@ LOGGING = {
     "root": {"handlers": ["console"], "level": "WARNING"},
     "loggers": {"django": {"handlers": ["console"], "level": "INFO", "propagate": False}},
 }
+
+# SearXNG instance used by the profile photo picker (/profile_photos/), e.g. http://searxng.default.svc.cluster.local:8080
+# Optional: without it only archive photos are offered. SearXNG must have "json" in search.formats.
+SEARXNG_URL = config('SEARXNG_URL', default='')
