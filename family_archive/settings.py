@@ -92,6 +92,18 @@ STATICFILES_DIRS = (
 )
 STATIC_ROOT = os.path.join(BASE_DIR, "static_host/")
 
+# In the Docker image (STATIC_HASHED=True) collectstatic writes content-hashed copies, e.g. media.3f9a1c.js,
+# and {% static %} links to them, so each deploy gets new URLs and browsers/Cloudflare never serve stale JS/CSS.
+# Off by default so local runserver and tests work without running collectstatic.
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        if config('STATIC_HASHED', default=False, cast=bool)
+        else "django.contrib.staticfiles.storage.StaticFilesStorage"
+    },
+}
+
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 MEDIA_URL = '/media/'
 
@@ -144,3 +156,12 @@ DATE_INPUT_FORMATS = [
     '%Y-%m-%d',
     '%Y/%m/%d',
 ]
+# Send errors (including 500 tracebacks) to stdout so they appear in `kubectl logs`.
+# Django's default only emails admins when DEBUG=False, so production 500s were silent.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "root": {"handlers": ["console"], "level": "WARNING"},
+    "loggers": {"django": {"handlers": ["console"], "level": "INFO", "propagate": False}},
+}

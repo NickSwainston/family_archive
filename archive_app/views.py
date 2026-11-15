@@ -3,7 +3,9 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.edit import CreateView
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.conf import settings
 from django.urls import reverse, reverse_lazy
+from django.views.static import serve
 
 from datetime import datetime
 from itertools import groupby
@@ -254,3 +256,8 @@ def event_edit(request, event_id):
     else:
         form = EventForm(instance=event)
     return render(request, 'archive_app/event_form.html', {'form': form, 'event': event})
+
+
+def serve_media(request, path):
+    """Serve an uploaded file from MEDIA_ROOT (read per request so tests can override it)."""
+    return serve(request, path, document_root=settings.MEDIA_ROOT)

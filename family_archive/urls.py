@@ -14,9 +14,10 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+import re
+
+from django.urls import path, include, re_path
 from django.conf import settings
-from django.conf.urls.static import static
 
 from archive_app import views
 
@@ -35,5 +36,8 @@ urlpatterns = [
     path('events/<int:event_id>/edit/', views.event_edit, name='event_edit'),
 ]
 
-# allow media files to be linked and viewed directly
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Serve uploaded media (photos/videos) from MEDIA_ROOT. The static() helper only works when DEBUG=True,
+# so register the view directly; there's no separate web server for /media/ in the k8s deployment.
+urlpatterns += [
+    re_path(r'^%s(?P<path>.*)$' % re.escape(settings.MEDIA_URL.lstrip('/')), views.serve_media),
+]

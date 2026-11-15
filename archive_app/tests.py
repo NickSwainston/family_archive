@@ -142,3 +142,13 @@ class PerFileUploadTests(TestCase):
         }, **self.AJAX)
         self.assertEqual(resp.status_code, 400)
         self.assertIn('end_date', resp.json()['errors'])
+
+
+@override_settings(MEDIA_ROOT=TMP_MEDIA, DEBUG=False)
+class MediaServingTests(TestCase):
+    def test_uploaded_media_served_when_debug_off(self):
+        user = User.objects.create_user('alice')
+        media = MediaFile.objects.create(uploaded_by=UploadedBy.objects.create(user=user), media_path=upload())
+        resp = self.client.get(media.media_path.url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(b''.join(resp.streaming_content), PIXEL)
