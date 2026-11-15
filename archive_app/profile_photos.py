@@ -5,6 +5,7 @@ already in the archive) and click the right one; it is then saved as their profi
 Nothing is assigned automatically - a person always makes the choice.
 """
 import ipaddress
+import uuid
 import json
 import mimetypes
 import socket
@@ -16,8 +17,9 @@ from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.files.base import ContentFile
 from django.db.models import Q
-from django.http import HttpResponseBadRequest
+from django.http import Http404, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, render
+from django.views.decorators.cache import cache_control
 from django.views.decorators.http import require_POST
 
 from .models import FamilyMember, MediaFile
@@ -53,7 +55,12 @@ def web_image_search(query, limit=24):
     base = settings.SEARXNG_URL.rstrip('/')
     if not base:
         raise PhotoSearchError('Web search is not configured (set SEARXNG_URL).')
-    params = urllib.parse.urlencode({'q': query, 'categories': 'images', 'format': 'json', 'safesearch': 1})
+    # Only ask engines that can return photos of real people. The default images category also queries
+    # stock/art/icon sources (pexels, openverse, artic, lucide...) that bury the useful results, and
+    # passing `categories` alongside `engines` makes SearXNG ignore the engine list - so send engines only.
+    params = urllib.parse.urlencode({
+        'q': query, 'engines': settings.SEARXNG_IMAGE_ENGINES, 'format': 'json', 'safesearch': 1,
+    })
     req = urllib.request.Request(f'{base}/search?{params}', headers={'Accept': 'application/json'})
     try:
         with urllib.request.urlopen(req, timeout=20) as resp:
@@ -144,6 +151,85 @@ def download_image(url, max_redirects=3):
 
 
 # ---------------------------------------------------------------------------
+# Immich face recognition
+# ---------------------------------------------------------------------------
+# Immich already detects and groups faces; once a person is named in Immich we can show their face
+# crop and the photos they appear in. Immich is internal-only and needs an API key, so images are
+# proxied through immich_image() rather than linked directly from the browser.
+IMMICH_PEOPLE_LIMIT = 3
+IMMICH_PHOTOS_PER_PERSON = 12
+
+
+def _immich_request(path, body=None, accept='application/json'):
+    base = settings.IMMICH_URL.rstrip('/')
+    if not (base and settings.IMMICH_API_KEY):
+        raise PhotoSearchError('Immich is not configured (set IMMICH_URL and IMMICH_API_KEY).')
+    headers = {'x-api-key': settings.IMMICH_API_KEY, 'Accept': accept}
+    data = None
+    if body is not None:
+        data = json.dumps(body).encode()
+        headers['Content-Type'] = 'application/json'
+    req = urllib.request.Request(f'{base}/api{path}', data=data, headers=headers)
+    try:
+        return urllib.request.urlopen(req, timeout=20)
+    except urllib.error.HTTPError as e:
+        if e.code in (401, 403):
+            raise PhotoSearchError(f'Immich refused the API key (HTTP {e.code}); it needs person.read, asset.read and asset.view.')
+        raise PhotoSearchError(f'Immich request failed (HTTP {e.code}).')
+    except (urllib.error.URLError, TimeoutError):
+        raise PhotoSearchError('Could not reach Immich.')
+
+
+def _immich_json(path, body=None):
+    with _immich_request(path, body) as resp:
+        return json.load(resp)
+
+
+def immich_find_people(name):
+    """Named Immich people matching `name`; falls back to first + last name (skips middle names)."""
+    tried, people = [], []
+    words = name.split()
+    for candidate in (name, f'{words[0]} {words[-1]}' if len(words) > 2 else None):
+        if not candidate or candidate in tried:
+            continue
+        tried.append(candidate)
+        found = _immich_json('/search/person?' + urllib.parse.urlencode({'name': candidate, 'withHidden': 'false'}))
+        people = [p for p in found if p.get('name')]
+        if people:
+            break
+    return people[:IMMICH_PEOPLE_LIMIT]
+
+
+def immich_person_photos(person_id):
+    """Most recent photos Immich has tagged with this person."""
+    body = {'personIds': [person_id], 'type': 'IMAGE', 'size': IMMICH_PHOTOS_PER_PERSON, 'order': 'desc'}
+    items = _immich_json('/search/metadata', body).get('assets', {}).get('items', [])
+    return [{'id': a['id'], 'taken': (a.get('localDateTime') or a.get('fileCreatedAt') or '')[:10]} for a in items]
+
+
+def immich_candidates(name):
+    """[{'person': {...}, 'photos': [...]}, ...] for the template."""
+    return [{'person': p, 'photos': immich_person_photos(p['id'])} for p in immich_find_people(name)]
+
+
+def immich_image_bytes(kind, object_id):
+    """Fetch a face crop ('face') or a large preview of a photo ('photo'); returns (bytes, content_type)."""
+    try:
+        object_id = str(uuid.UUID(object_id))  # Immich ids are UUIDs; also stops path tricks in the URL
+    except ValueError:
+        raise PhotoSearchError('Bad Immich id.')
+    path = {'face': f'/people/{object_id}/thumbnail', 'photo': f'/assets/{object_id}/thumbnail?size=preview'}.get(kind)
+    if path is None:
+        raise PhotoSearchError('Unknown Immich image type.')
+    with _immich_request(path, accept='image/*') as resp:
+        content_type = resp.headers.get_content_type()
+        data = resp.read(MAX_DOWNLOAD_BYTES + 1)
+    if not content_type.startswith('image/') or len(data) > MAX_DOWNLOAD_BYTES:
+        raise PhotoSearchError('Immich did not return a usable image.')
+    return data, content_type
+
+
+# ---------------------------------------------------------------------------
 # Views (staff only: changing everyone's profile photo is an admin task)
 # ---------------------------------------------------------------------------
 
@@ -164,32 +250,43 @@ def profile_photos(request):
 
 @staff_member_required
 def profile_photo_candidates(request, member_id):
-    """htmx partial: web results + a page of archive photos for one person."""
+    """htmx partial: Immich face matches + web results, or (source=archive) a page of archive photos."""
     member = get_object_or_404(FamilyMember, pk=member_id)
+    source = request.GET.get('source', 'immich')
     query = request.GET.get('q', '').strip() or default_query(member)
+    immich_name = request.GET.get('name', '').strip() or (member.full_name or '')
 
-    web_results, web_error = [], None
-    if request.GET.get('source', 'web') == 'web':
+    immich_results, immich_error, web_results, web_error = [], None, [], None
+    archive, page = [], max(int(request.GET.get('page', '1') or 1), 1)
+    if source == 'archive':
+        archive = [
+            m for m in MediaFile.objects.order_by('-date_taken', '-id')
+            [(page - 1) * ARCHIVE_PAGE_SIZE: page * ARCHIVE_PAGE_SIZE]
+            if (m.media_path.name or '').lower().endswith(IMAGE_EXTENSIONS)
+        ]
+    else:
+        if immich_name:
+            try:
+                immich_results = immich_candidates(immich_name)
+            except PhotoSearchError as e:
+                immich_error = str(e)
         try:
             web_results = web_image_search(query)
         except PhotoSearchError as e:
             web_error = str(e)
 
-    page = max(int(request.GET.get('page', '1') or 1), 1)
-    archive = [
-        m for m in MediaFile.objects.order_by('-date_taken', '-id')
-        [(page - 1) * ARCHIVE_PAGE_SIZE: page * ARCHIVE_PAGE_SIZE]
-        if (m.media_path.name or '').lower().endswith(IMAGE_EXTENSIONS)
-    ]
     context = {
         'member': member,
+        'source': source,
         'query': query,
+        'immich_name': immich_name,
+        'immich_results': immich_results,
+        'immich_error': immich_error,
         'web_results': web_results,
         'web_error': web_error,
         'archive': archive,
         'archive_page': page,
-        'archive_has_more': MediaFile.objects.count() > page * ARCHIVE_PAGE_SIZE,
-        'source': request.GET.get('source', 'web'),
+        'archive_has_more': source == 'archive' and MediaFile.objects.count() > page * ARCHIVE_PAGE_SIZE,
     }
     return render(request, 'archive_app/_profile_photo_candidates.html', context)
 
@@ -206,6 +303,10 @@ def set_profile_photo(request, member_id):
             with media.media_path.open('rb') as f:
                 data = f.read()
             ext = '.' + media.media_path.name.rsplit('.', 1)[-1].lower()
+        elif request.POST.get('immich_kind'):
+            data, content_type = immich_image_bytes(request.POST['immich_kind'], request.POST.get('immich_id', ''))
+            ext = mimetypes.guess_extension(content_type) or '.jpg'
+            ext = '.jpg' if ext == '.jpe' else ext
         elif request.POST.get('image_url'):
             try:
                 data, ext = download_image(request.POST['image_url'])
@@ -232,3 +333,14 @@ def set_profile_photo(request, member_id):
             'profilePhotoChanged': {'id': str(member.id), 'url': member.profile_picture.url},
         })
     return response
+
+
+@staff_member_required
+@cache_control(private=True, max_age=3600)
+def immich_image(request, kind, object_id):
+    """Pass an Immich face crop / photo preview through to the browser (Immich needs the API key)."""
+    try:
+        data, content_type = immich_image_bytes(kind, object_id)
+    except PhotoSearchError:
+        raise Http404
+    return HttpResponse(data, content_type=content_type)

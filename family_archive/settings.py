@@ -174,3 +174,11 @@ LOGGING = {
 # SearXNG instance used by the profile photo picker (/profile_photos/), e.g. http://searxng.default.svc.cluster.local:8080
 # Optional: without it only archive photos are offered. SearXNG must have "json" in search.formats.
 SEARXNG_URL = config('SEARXNG_URL', default='')
+# Which SearXNG engines to ask (comma separated). Google/Startpage/Brave/DuckDuckGo image engines are
+# blocked or rate-limited for self-hosted instances, so Bing does the real web search.
+SEARXNG_IMAGE_ENGINES = config('SEARXNG_IMAGE_ENGINES', default='bing images,flickr,wikicommons.images')
+
+# Immich (face recognition) for the profile photo picker, e.g. http://immich-server.default.svc.cluster.local:2283
+# The API key needs person.read, asset.read and asset.view. Optional: without it Immich matches are skipped.
+IMMICH_URL = config('IMMICH_URL', default='')
+IMMICH_API_KEY = config('IMMICH_API_KEY', default='')

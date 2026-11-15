@@ -186,7 +186,7 @@ class FamilyTreeTests(TestCase):
         self.assertEqual(self.people(self.client.get('/family_tree/'))[dad_id]['data']['email'], 'dad@example.com')
 
 
-@override_settings(MEDIA_ROOT=TMP_MEDIA, SEARXNG_URL='http://searxng:8080')
+@override_settings(MEDIA_ROOT=TMP_MEDIA, SEARXNG_URL='http://searxng:8080', IMMICH_URL='', IMMICH_API_KEY='')
 class ProfilePhotoPickerTests(TestCase):
     from unittest import mock as _mock
 
@@ -222,6 +222,8 @@ class ProfilePhotoPickerTests(TestCase):
         self.assertTrue(sent.startswith('http://searxng:8080/search?'))
         self.assertIn('q=Test+Person+Perth', sent)
         self.assertIn('format=json', sent)
+        self.assertIn('engines=bing+images', sent)
+        self.assertNotIn('categories=', sent)  # SearXNG ignores `engines` when categories is also sent
         results = resp.context['web_results']
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]['thumbnail'], 'https://thumbs.example/t.jpg')
@@ -235,12 +237,15 @@ class ProfilePhotoPickerTests(TestCase):
             resp = self.client.get(reverse('profile_photo_candidates', args=[self.member.id]))
         self.assertContains(resp, 'search.formats')
 
-    @override_settings(SEARXNG_URL='')
-    def test_without_api_key_archive_photos_still_offered(self):
+    @override_settings(SEARXNG_URL='', IMMICH_URL='')
+    def test_unconfigured_sources_explain_themselves_and_archive_is_opt_in(self):
         MediaFile.objects.create(uploaded_by=UploadedBy.objects.create(user=self.admin), media_path=upload('arch.gif'))
-        resp = self.client.get(reverse('profile_photo_candidates', args=[self.member.id]))
-        self.assertContains(resp, 'not configured')
-        self.assertEqual(len(resp.context['archive']), 1)
+        url = reverse('profile_photo_candidates', args=[self.member.id])
+        resp = self.client.get(url)
+        self.assertContains(resp, 'Web search is not configured')
+        self.assertContains(resp, 'Immich is not configured')
+        self.assertEqual(resp.context['archive'], [])
+        self.assertEqual(len(self.client.get(url, {'source': 'archive'}).context['archive']), 1)
 
     def test_pick_archive_photo(self):
         media = MediaFile.objects.create(uploaded_by=UploadedBy.objects.create(user=self.admin), media_path=upload('arch.gif'))
@@ -291,3 +296,82 @@ class ProfilePhotoPickerTests(TestCase):
         resp = self.client.get('/family_tree/')
         self.assertContains(resp, 'const CAN_EDIT_PHOTOS = false;')
         self.assertNotContains(resp, 'id="photo-modal"')
+
+
+@override_settings(MEDIA_ROOT=TMP_MEDIA, SEARXNG_URL='', IMMICH_URL='http://immich:2283', IMMICH_API_KEY='k')
+class ImmichFacePickerTests(TestCase):
+    """Immich HTTP calls are faked by URL so no real server is needed."""
+    from unittest import mock as _mock
+    PERSON_ID = '11111111-1111-1111-1111-111111111111'
+    ASSET_ID = '22222222-2222-2222-2222-222222222222'
+
+    def setUp(self):
+        from .models import FamilyMember
+        self.admin = User.objects.create_user('admin', is_staff=True)
+        self.client.force_login(self.admin)
+        self.member = FamilyMember.objects.create(full_name='Mary Jane Test')
+        self.requests = []
+
+    def fake_urlopen(self, req, timeout=None):
+        url = req.full_url
+        self.requests.append(req)
+        resp = self._mock.MagicMock()
+        resp.__enter__.return_value = resp
+        if '/api/search/person' in url:
+            # Only the first + last name form matches, to exercise the middle-name fallback
+            found = [{'id': self.PERSON_ID, 'name': 'Mary Test', 'birthDate': '1950-02-03'}] if 'Mary+Test' in url else []
+            resp.read.side_effect = None
+            body = json.dumps(found).encode()
+        elif url.endswith('/api/search/metadata'):
+            body = json.dumps({'assets': {'items': [{'id': self.ASSET_ID, 'localDateTime': '2019-06-01T10:00:00.000Z'}]}}).encode()
+        else:  # face / photo image
+            resp.headers.get_content_type.return_value = 'image/jpeg'
+            resp.read.return_value = PIXEL
+            return resp
+        stream = io.BytesIO(body)
+        resp.read.side_effect = stream.read
+        return resp
+
+    def get_candidates(self, **params):
+        with self._mock.patch('urllib.request.urlopen', side_effect=self.fake_urlopen):
+            return self.client.get(reverse('profile_photo_candidates', args=[self.member.id]), params)
+
+    def test_finds_person_by_first_and_last_name_and_lists_their_photos(self):
+        resp = self.get_candidates()
+        matches = resp.context['immich_results']
+        self.assertEqual(matches[0]['person']['name'], 'Mary Test')
+        self.assertEqual(matches[0]['photos'], [{'id': self.ASSET_ID, 'taken': '2019-06-01'}])
+        self.assertContains(resp, reverse('immich_image', args=['face', self.PERSON_ID]))
+        self.assertContains(resp, reverse('immich_image', args=['photo', self.ASSET_ID]))
+        # API key goes to Immich only, never into the page
+        self.assertEqual(self.requests[0].headers['X-api-key'], 'k')
+        self.assertNotContains(resp, 'x-api-key')
+        metadata = json.loads(self.requests[-1].data)
+        self.assertEqual(metadata['personIds'], [self.PERSON_ID])
+
+    def test_no_match_explains_how_to_fix(self):
+        resp = self.get_candidates(name='Nobody Here')
+        self.assertContains(resp, 'Explore')
+
+    def test_image_proxy_and_picking_a_face(self):
+        with self._mock.patch('urllib.request.urlopen', side_effect=self.fake_urlopen):
+            img = self.client.get(reverse('immich_image', args=['face', self.PERSON_ID]))
+            resp = self.client.post(reverse('set_profile_photo', args=[self.member.id]),
+                                    {'immich_kind': 'face', 'immich_id': self.PERSON_ID})
+        self.assertEqual((img.status_code, img['Content-Type'], img.content), (200, 'image/jpeg', PIXEL))
+        self.assertIn('/api/people/%s/thumbnail' % self.PERSON_ID, self.requests[0].full_url)
+        self.assertIn('profilePhotoChanged', resp['HX-Trigger'])
+        self.member.refresh_from_db()
+        self.assertTrue(self.member.profile_picture.name.endswith('.jpg'))
+
+    def test_proxy_rejects_bad_ids_and_kinds_without_calling_immich(self):
+        with self._mock.patch('urllib.request.urlopen', side_effect=self.fake_urlopen):
+            for kind, oid in (('face', 'not-a-uuid'), ('albums', self.PERSON_ID)):
+                self.assertEqual(self.client.get(reverse('immich_image', args=[kind, oid])).status_code, 404)
+            # Slashes can't even reach the view
+            self.assertEqual(self.client.get('/profile_photos/immich/face/..%2F..%2Fserver%2Finfo/').status_code, 404)
+        self.assertEqual(self.requests, [])
+
+    def test_proxy_is_staff_only(self):
+        self.client.force_login(User.objects.create_user('family'))
+        self.assertEqual(self.client.get(reverse('immich_image', args=['face', self.PERSON_ID])).status_code, 302)

@@ -37,6 +37,7 @@ urlpatterns = [
     path('profile_photos/', profile_photos.profile_photos, name='profile_photos'),
     path('profile_photos/<int:member_id>/candidates/', profile_photos.profile_photo_candidates, name='profile_photo_candidates'),
     path('profile_photos/<int:member_id>/set/', profile_photos.set_profile_photo, name='set_profile_photo'),
+    path('profile_photos/immich/<str:kind>/<str:object_id>/', profile_photos.immich_image, name='immich_image'),
 ]
 
 # Serve uploaded media (photos/videos) from MEDIA_ROOT. The static() helper only works when DEBUG=True,
