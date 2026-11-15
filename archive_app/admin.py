@@ -11,3 +11,11 @@ class FamilyMemberAdmin(admin.ModelAdmin):
 
 admin.site.register(models.MediaFile)
 admin.site.register(models.FamilyMember, FamilyMemberAdmin)
+
+
+@admin.register(models.Event)
+class EventAdmin(admin.ModelAdmin):
+    list_display = ('title', 'place', 'start_date', 'end_date', 'created_by')
+    search_fields = ('title', 'place')
+    filter_horizontal = ('images',)
+    raw_id_fields = ('cover',)

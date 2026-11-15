@@ -29,6 +29,10 @@ urlpatterns = [
     path('tag_images/', views.tag_images_form, name='tag_images'),
     path('update_image/<int:image_id>/', views.update_image, name='update_image'),
     path('post_create/', views.PostCreateView.as_view(), name='post_create'),
+    path('timeline/', views.timeline, name='timeline'),
+    path('events/new/', views.event_create, name='event_create'),
+    path('events/<int:event_id>/', views.event_detail, name='event_detail'),
+    path('events/<int:event_id>/edit/', views.event_edit, name='event_edit'),
 ]
 
 # allow media files to be linked and viewed directly

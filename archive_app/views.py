@@ -6,9 +6,23 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 
 from datetime import datetime
+from itertools import groupby
 
-from .forms import MediaFileForm
-from .models import MediaFile, FamilyMember, Post, UploadedBy
+from django.contrib import messages
+from django.core.exceptions import PermissionDenied
+from django.db.models import Count, Prefetch
+
+from .forms import MediaFileForm, EventForm
+from .models import MediaFile, FamilyMember, Post, UploadedBy, Event
+
+
+def save_uploaded_media(user, files):
+    """Store uploaded files as MediaFile rows sharing one UploadedBy record."""
+    uploaded_by = UploadedBy.objects.create(user=user, date=datetime.now())
+    return [
+        MediaFile.objects.create(uploaded_by=uploaded_by, date_taken=None, media_path=f)
+        for f in files
+    ]
 
 
 def home_page(request):
@@ -24,18 +38,8 @@ def gallery(request):
     if request.method == 'POST':
         images = request.FILES.getlist('images')
 
-        uploaded_by = UploadedBy.objects.create(
-            user=request.user,
-            date=datetime.now(),
-        )
-        for image in images:
-            MediaFile.objects.create(
-                uploaded_by=uploaded_by,
-                date_taken=None,
-                media_path=image,
-            )
-
-        uploaded_images = MediaFile.objects.filter(uploaded_by=uploaded_by)
+        uploaded = save_uploaded_media(request.user, images)
+        uploaded_images = MediaFile.objects.filter(id__in=[m.id for m in uploaded])
         return tag_images_form(request, uploaded_images=uploaded_images)
     else:
         images = MediaFile.objects.all()
@@ -153,3 +157,80 @@ def family_tree(request):
         'roots': roots,
     }
     return render(request, 'archive_app/family_tree.html', context)
+
+
+# ---------------------------------------------------------------------------
+# Event timeline
+# ---------------------------------------------------------------------------
+
+def _can_edit_event(user, event):
+    return user.is_superuser or (event.created_by_id is not None and event.created_by_id == user.id)
+
+
+@login_required
+def timeline(request):
+    events = (
+        Event.objects
+        .annotate(image_count=Count('images'))
+        .prefetch_related(Prefetch('images', queryset=MediaFile.objects.order_by('date_taken', 'id')))
+        .select_related('cover')
+        # Explicit: Meta.ordering is ignored on GROUP BY (annotate/Count) queries
+        .order_by('-start_date', '-id')
+    )
+    # Group into [(year, [events...]), ...] for the year markers; events are already newest first
+    years = [(year, list(group)) for year, group in groupby(events, key=lambda e: e.start_date.year)]
+    return render(request, 'archive_app/timeline.html', {'years': years})
+
+
+@login_required
+def event_detail(request, event_id):
+    event = get_object_or_404(Event.objects.select_related('created_by'), pk=event_id)
+
+    if request.method == 'POST':
+        # Any logged-in family member can add photos to an event
+        files = request.FILES.getlist('images')
+        if files:
+            event.images.add(*save_uploaded_media(request.user, files))
+            messages.success(request, f"Added {len(files)} file{'s' if len(files) != 1 else ''}.")
+        return redirect('event_detail', event_id=event.id)
+
+    images = event.images.select_related('uploaded_by__user').order_by('date_taken', 'id')
+    context = {
+        'event': event,
+        'images': images,
+        'can_edit': _can_edit_event(request.user, event),
+    }
+    return render(request, 'archive_app/event_detail.html', context)
+
+
+@login_required
+def event_create(request):
+    if request.method == 'POST':
+        form = EventForm(request.POST)
+        if form.is_valid():
+            event = form.save(commit=False)
+            event.created_by = request.user
+            event.save()
+            files = request.FILES.getlist('images')
+            if files:
+                event.images.add(*save_uploaded_media(request.user, files))
+            return redirect('event_detail', event_id=event.id)
+    else:
+        form = EventForm()
+    return render(request, 'archive_app/event_form.html', {'form': form, 'event': None})
+
+
+@login_required
+def event_edit(request, event_id):
+    event = get_object_or_404(Event, pk=event_id)
+    if not _can_edit_event(request.user, event):
+        raise PermissionDenied
+
+    if request.method == 'POST':
+        form = EventForm(request.POST, instance=event)
+        if form.is_valid():
+            form.save()
+            return redirect('event_detail', event_id=event.id)
+    else:
+        form = EventForm(instance=event)
+    return render(request, 'archive_app/event_form.html', {'form': form, 'event': event})

@@ -74,3 +74,7 @@ uv run python manage.py runserver
 docker build --network=host -t "$REGISTRY/family-archive:$VERSION" .
 docker push "$REGISTRY/family-archive:$VERSION"
 ```
+
+## Event timeline
+
+Family events (title, place, date range, photos) are shown at `/timeline/`. Any logged-in user can add photos to an event; only its creator or a superuser can edit it.
